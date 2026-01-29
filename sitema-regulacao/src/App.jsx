@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CorpoHumano from './CorpoHumano';
 import { supabase } from './supabaseClient';
 import Login from './Login';
-import ModalForm from './ModalForm';
-import Toast from './Toast';
+import ModalForm from './ModalForm'; // <--- NOVO
+import Toast from './Toast';         // <--- NOVO
 import './App.css'; 
 
 function App() {
@@ -19,10 +19,10 @@ function App() {
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
   
-  // INTERFACE
+  // INTERFACE (MODAL E TOAST) - NOVOS ESTADOS
   const [modalAberto, setModalAberto] = useState(false);
-  const [itemEmEdicao, setItemEmEdicao] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [itemEmEdicao, setItemEmEdicao] = useState(null); // Se null = Criando, Se objeto = Editando
+  const [toast, setToast] = useState(null); // { mensagem: 'Salvo!', tipo: 'sucesso' }
 
   // BUSCA E LOGIN
   const [termoBusca, setTermoBusca] = useState('');
@@ -84,92 +84,85 @@ function App() {
     : listaProtocolos;
 
 
-  // --- FUNÇÕES DE CRUD (SUB-MENUS) --- NOVA FUNÇÃO AQUI
-  const criarSubMenu = async () => {
-    if (!parteSelecionada || !isAdmin) return;
-    
-    const nome = prompt(`Nova Categoria para ${parteSelecionada.replace(/-/g, ' ')}:`);
-    if (!nome) return;
+  // --- FUNÇÕES DE CRUD COM MODAL ---
 
-    const { error } = await supabase
-      .from('sub_areas')
-      .insert([{ body_part_id: parteSelecionada, name: nome }]);
-
-    if (error) {
-      setToast({ mensagem: 'Erro ao criar categoria.', tipo: 'erro' });
-    } else {
-      setToast({ mensagem: 'Categoria criada!', tipo: 'sucesso' });
-      carregarDadosDaParte(parteSelecionada); // Recarrega para aparecer o botão novo
-    }
-  };
-
-  const apagarSubMenu = async (idSub) => {
-    if (!window.confirm("Isso apagará a categoria e deixará os itens dela 'soltos'. Continuar?")) return;
-    
-    const { error } = await supabase.from('sub_areas').delete().eq('id', idSub);
-    if (error) setToast({ mensagem: 'Erro ao apagar.', tipo: 'erro' });
-    else {
-      setSubAreaSelecionada(null);
-      carregarDadosDaParte(parteSelecionada);
-    }
-  };
-
-  // --- FUNÇÕES DE CRUD (PROTOCOLOS) ---
-
+  // 1. Abrir Modal para CRIAR
   const abrirModalCriar = () => {
     if (!parteSelecionada || !isAdmin) return;
-    setItemEmEdicao(null);
+    setItemEmEdicao(null); // Garante que está limpo
     setModalAberto(true);
   };
 
+  // 2. Abrir Modal para EDITAR
   const abrirModalEditar = (item) => {
     if (!isAdmin) return;
-    setItemEmEdicao(item);
+    setItemEmEdicao(item); // Passa os dados atuais
     setModalAberto(true);
   };
 
+  // 3. Salvar (Chamado pelo ModalForm)
   const salvarDadosDoModal = async (dadosDoFormulario) => {
+    // Fecha o modal primeiro para dar sensação de agilidade
     setModalAberto(false);
+
     try {
       if (itemEmEdicao) {
-        const { error } = await supabase.from('protocols').update({ 
+        // --- ATUALIZAR (UPDATE) ---
+        const { error } = await supabase
+          .from('protocols')
+          .update({ 
             problema: dadosDoFormulario.problema, 
             locais: dadosDoFormulario.locais, 
             exame: dadosDoFormulario.exame 
-          }).eq('id', itemEmEdicao.id);
+          })
+          .eq('id', itemEmEdicao.id);
+
         if (error) throw error;
         setToast({ mensagem: 'Atualizado com sucesso!', tipo: 'sucesso' });
+
       } else {
+        // --- CRIAR (INSERT) ---
         const novoItem = {
           body_part_id: parteSelecionada,
-          sub_area_id: subAreaSelecionada, 
+          sub_area_id: subAreaSelecionada, // Pega o sub-menu ativo no momento
           problema: dadosDoFormulario.problema,
           locais: dadosDoFormulario.locais,
           exame: dadosDoFormulario.exame || "Consulta"
         };
+
         const { error } = await supabase.from('protocols').insert([novoItem]);
         if (error) throw error;
         setToast({ mensagem: 'Adicionado com sucesso!', tipo: 'sucesso' });
       }
+
+      // Recarrega os dados
       if (parteSelecionada) carregarDadosDaParte(parteSelecionada);
       if (termoBusca) realizarBusca(termoBusca);
+
     } catch (error) {
       console.error(error);
       setToast({ mensagem: 'Erro ao salvar.', tipo: 'erro' });
     }
   };
 
+  // 4. Remover
   const remover = async (id, origem = 'lista') => {
     if (!isAdmin || !window.confirm("Tem certeza que deseja apagar?")) return;
+    
     const { error } = await supabase.from('protocols').delete().eq('id', id);
+    
     if (error) {
       setToast({ mensagem: 'Erro ao apagar.', tipo: 'erro' });
     } else {
       setToast({ mensagem: 'Item removido.', tipo: 'sucesso' });
-      if (origem === 'busca') setResultadosBusca(prev => prev.filter(item => item.id !== id));
-      else carregarDadosDaParte(parteSelecionada);
+      if (origem === 'busca') {
+        setResultadosBusca(prev => prev.filter(item => item.id !== id));
+      } else {
+        carregarDadosDaParte(parteSelecionada);
+      }
     }
   };
+
 
   // --- BUSCA GLOBAL ---
   useEffect(() => {
@@ -183,7 +176,9 @@ function App() {
   async function realizarBusca(texto) {
     setBuscando(true);
     setParteSelecionada(null);
-    const { data } = await supabase.from('protocols').select('*, body_parts(display_name)')
+    const { data } = await supabase
+      .from('protocols')
+      .select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%, locais.ilike.%${texto}%, exame.ilike.%${texto}%`)
       .limit(20);
     setResultadosBusca(data || []);
@@ -193,18 +188,33 @@ function App() {
   // --- RENDERIZAÇÃO ---
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      
+      {/* COMPONENTES FLUTUANTES */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
-      <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
+      
+      {/* Nosso Modal Novo */}
+      <ModalForm 
+        isOpen={modalAberto} 
+        onClose={() => setModalAberto(false)} 
+        onSave={salvarDadosDoModal}
+        itemEdicao={itemEmEdicao}
+      />
+
+      {/* Nossa Notificação Nova */}
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
+
+      {/* HEADER */}
       <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--borda)', flexShrink: 0 }}>
         <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--destaque)' }}>SISREG<span style={{ fontSize: '10px', opacity: 0.7 }}>PRO</span></div>
+        
         <div style={{ flex: 1, maxWidth: '400px', margin: '0 20px', position: 'relative' }}>
           <span style={{position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)'}}>🔍</span>
           <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
             style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
           {termoBusca && <button onClick={() => setTermoBusca('')} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', border:'none', background:'transparent', cursor:'pointer', color:'var(--texto-secundario)'}}>✖</button>}
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {sessao?.user?.email && <div style={{ textAlign: 'right', fontSize: '12px' }}><span style={{ color: 'var(--texto-secundario)' }}>Olá, </span><span style={{ color: 'var(--destaque)', fontWeight: 'bold' }}>{sessao.user.email}</span></div>}
           <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
@@ -219,7 +229,9 @@ function App() {
         </div>
       </header>
 
+      {/* BODY */}
       <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        
         <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
           <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
@@ -228,6 +240,7 @@ function App() {
         </section>
 
         <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
+          
           {termoBusca.length > 0 ? (
             <div style={{ animation: 'fadeIn 0.3s' }}>
               <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
@@ -248,31 +261,19 @@ function App() {
                   {modoEdicao && isAdmin && <button onClick={abrirModalCriar} style={{ background: 'var(--destaque)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.2)' }}>+ Novo Protocolo</button>}
                 </div>
 
-                {/* --- ÁREA DE SUB-MENUS ATUALIZADA --- */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'center' }}>
+                {subMenus.length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '20px 0' }}>
                     <button onClick={() => setSubAreaSelecionada(null)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === null ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === null ? '#fff' : 'var(--destaque)' }}>Todos</button>
-                    
                     {subMenus.map(sub => (
-                      <div key={sub.id} style={{ position: 'relative', display: 'flex' }}>
-                        <button onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
-                        
-                        {/* Botãozinho para apagar Sub-menu (Só no modo edição e se estiver selecionado) */}
-                        {modoEdicao && isAdmin && subAreaSelecionada === sub.id && (
-                          <button onClick={(e) => { e.stopPropagation(); apagarSubMenu(sub.id); }} style={{ marginLeft: '-10px', marginTop: '-10px', background: '#ff5252', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', border: 'none', cursor: 'pointer', fontSize: '10px', zIndex: 2 }}>x</button>
-                        )}
-                      </div>
+                      <button key={sub.id} onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
                     ))}
-                    
-                    {/* Botão CRIAR Categoria (Só no modo edição) */}
-                    {modoEdicao && isAdmin && (
-                      <button onClick={criarSubMenu} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px dashed var(--texto-secundario)', cursor: 'pointer', fontSize: '13px', background: 'transparent', color: 'var(--texto-secundario)' }}>+ Categoria</button>
-                    )}
-                </div>
+                  </div>
+                )}
                 
                 <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
                 
                 {loading && <p>Carregando...</p>}
-                {!loading && protocolsVisiveis.length > 0 ? (
+                {!loading && protocolosVisiveis.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {protocolosVisiveis.map((item) => (
                       <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />
@@ -307,6 +308,7 @@ const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag })
       </span>
     ));
   };
+
   return (
     <div style={{ padding: '15px', borderRadius: '8px', backgroundColor: 'var(--bg-pagina)', borderLeft: '4px solid var(--destaque)', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
       {showTag && item.body_parts && <span style={{ fontSize:'10px', textTransform:'uppercase', background:'var(--destaque)', color:'#fff', padding:'2px 6px', borderRadius:'4px', marginBottom:'5px', display:'inline-block' }}>{item.body_parts.display_name}</span>}
