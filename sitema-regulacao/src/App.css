@@ -1,0 +1,62 @@
+/* =========================================
+   1. DEFINIÇÃO DAS CORES (TEMA VERDE)
+   ========================================= */
+:root {
+  /* TEMA CLARO (Dia) */
+  --bg-pagina: #f0f2f5;
+  --bg-card: #ffffff;
+  --texto-primario: #2c3e50;
+  --texto-secundario: #607d8b;
+  --borda: #dce0e5;
+  
+  /* O VERDE (Claro) */
+  --destaque: #2e7d32;        /* Verde Esmeralda Escuro */
+  --destaque-suave: #e8f5e9;  /* Fundo verde bem clarinho */
+  
+  --boneco-base: #cfd8dc;     /* Cinza azulado claro */
+  --boneco-hover: #b0bec5;
+  --input-bg: #ffffff;
+}
+
+/* TEMA ESCURO (Noite) */
+body.dark-mode {
+  --bg-pagina: #121212;
+  --bg-card: #1e1e1e;
+  --texto-primario: #e0e0e0;
+  --texto-secundario: #b0bec5;
+  --borda: #333333;
+
+  /* O VERDE (Escuro - Neon) */
+  --destaque: #00e676;        /* Verde Matrix/Neon */
+  --destaque-suave: #1b5e20;  /* Verde musgo escuro para fundos */
+  
+  --boneco-base: #424242;     /* Cinza chumbo */
+  --boneco-hover: #616161;
+  --input-bg: #2c2c2c;
+}
+
+/* =========================================
+   2. GERAL
+   ========================================= */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-pagina);
+  color: var(--texto-primario);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s ease;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Bonita */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-pagina); }
+::-webkit-scrollbar-thumb { background: var(--borda); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--destaque); }
