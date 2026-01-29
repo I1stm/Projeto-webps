@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import CorpoHumano from './CorpoHumano';
 import { supabase } from './supabaseClient';
 import Login from './Login';
-import ModalForm from './ModalForm'; // <--- NOVO
-import Toast from './Toast';         // <--- NOVO
+import ModalForm from './ModalForm';
+import Toast from './Toast';
 import './App.css'; 
+import HeaderSecao from './HeaderSecao';
 
 function App() {
   // --- ESTADOS GERAIS ---
@@ -15,14 +16,14 @@ function App() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // DADOS
+  // DADOS DO BANCO
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
   
-  // INTERFACE (MODAL E TOAST) - NOVOS ESTADOS
+  // MODAL E NOTIFICAÇÕES
   const [modalAberto, setModalAberto] = useState(false);
-  const [itemEmEdicao, setItemEmEdicao] = useState(null); // Se null = Criando, Se objeto = Editando
-  const [toast, setToast] = useState(null); // { mensagem: 'Salvo!', tipo: 'sucesso' }
+  const [itemEmEdicao, setItemEmEdicao] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // BUSCA E LOGIN
   const [termoBusca, setTermoBusca] = useState('');
@@ -32,7 +33,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [mostrarLogin, setMostrarLogin] = useState(false);
 
-  // --- EFEITOS ---
+  // --- EFEITOS (Dark Mode e Auth) ---
   useEffect(() => {
     if (darkMode) document.body.classList.add('dark-mode');
     else document.body.classList.remove('dark-mode');
@@ -72,9 +73,20 @@ function App() {
 
   async function carregarDadosDaParte(idParte) {
     setLoading(true);
-    const { data: subs } = await supabase.from('sub_areas').select('*').eq('body_part_id', idParte).order('name');
+    // Carrega Submenus
+    const { data: subs } = await supabase
+      .from('sub_areas')
+      .select('*')
+      .eq('body_part_id', idParte)
+      .order('name');
     setSubMenus(subs || []);
-    const { data: protos } = await supabase.from('protocols').select('*').eq('body_part_id', idParte).order('created_at', { ascending: false });
+
+    // Carrega Protocolos
+    const { data: protos } = await supabase
+      .from('protocols')
+      .select('*')
+      .eq('body_part_id', idParte)
+      .order('created_at', { ascending: false });
     setListaProtocolos(protos || []);
     setLoading(false);
   }
@@ -83,86 +95,81 @@ function App() {
     ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada)
     : listaProtocolos;
 
-
-  // --- FUNÇÕES DE CRUD COM MODAL ---
-
-  // 1. Abrir Modal para CRIAR
+  // --- FUNÇÕES DO MODAL (CRIAR/EDITAR) ---
   const abrirModalCriar = () => {
     if (!parteSelecionada || !isAdmin) return;
-    setItemEmEdicao(null); // Garante que está limpo
+    setItemEmEdicao(null);
     setModalAberto(true);
   };
 
-  // 2. Abrir Modal para EDITAR
   const abrirModalEditar = (item) => {
     if (!isAdmin) return;
-    setItemEmEdicao(item); // Passa os dados atuais
+    setItemEmEdicao(item);
     setModalAberto(true);
   };
 
-  // 3. Salvar (Chamado pelo ModalForm)
   const salvarDadosDoModal = async (dadosDoFormulario) => {
-    // Fecha o modal primeiro para dar sensação de agilidade
     setModalAberto(false);
-
     try {
       if (itemEmEdicao) {
-        // --- ATUALIZAR (UPDATE) ---
-        const { error } = await supabase
-          .from('protocols')
-          .update({ 
+        // UPDATE
+        const { error } = await supabase.from('protocols').update({ 
             problema: dadosDoFormulario.problema, 
             locais: dadosDoFormulario.locais, 
             exame: dadosDoFormulario.exame 
-          })
-          .eq('id', itemEmEdicao.id);
-
+          }).eq('id', itemEmEdicao.id);
         if (error) throw error;
         setToast({ mensagem: 'Atualizado com sucesso!', tipo: 'sucesso' });
-
       } else {
-        // --- CRIAR (INSERT) ---
+        // INSERT
         const novoItem = {
           body_part_id: parteSelecionada,
-          sub_area_id: subAreaSelecionada, // Pega o sub-menu ativo no momento
+          sub_area_id: subAreaSelecionada, 
           problema: dadosDoFormulario.problema,
           locais: dadosDoFormulario.locais,
           exame: dadosDoFormulario.exame || "Consulta"
         };
-
         const { error } = await supabase.from('protocols').insert([novoItem]);
         if (error) throw error;
         setToast({ mensagem: 'Adicionado com sucesso!', tipo: 'sucesso' });
       }
-
-      // Recarrega os dados
       if (parteSelecionada) carregarDadosDaParte(parteSelecionada);
       if (termoBusca) realizarBusca(termoBusca);
-
     } catch (error) {
       console.error(error);
       setToast({ mensagem: 'Erro ao salvar.', tipo: 'erro' });
     }
   };
 
-  // 4. Remover
+  // --- FUNÇÃO DE REMOVER PROTOCOLO ---
   const remover = async (id, origem = 'lista') => {
     if (!isAdmin || !window.confirm("Tem certeza que deseja apagar?")) return;
-    
     const { error } = await supabase.from('protocols').delete().eq('id', id);
-    
     if (error) {
       setToast({ mensagem: 'Erro ao apagar.', tipo: 'erro' });
     } else {
       setToast({ mensagem: 'Item removido.', tipo: 'sucesso' });
-      if (origem === 'busca') {
-        setResultadosBusca(prev => prev.filter(item => item.id !== id));
-      } else {
-        carregarDadosDaParte(parteSelecionada);
-      }
+      if (origem === 'busca') setResultadosBusca(prev => prev.filter(item => item.id !== id));
+      else carregarDadosDaParte(parteSelecionada);
     }
   };
 
+  // --- FUNÇÃO DE REMOVER SUBMENU (NOVA) ---
+  const apagarSubMenu = async (idSub, nomeSub) => {
+    if (!isAdmin || !modoEdicao) return;
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja EXCLUIR a categoria "${nomeSub}"?\n\nOs protocolos dentro dela NÃO serão apagados, apenas ficarão sem categoria.`
+    );
+    if (confirmacao) {
+      const { error } = await supabase.from('sub_areas').delete().eq('id', idSub);
+      if (error) {
+        alert('Erro ao apagar: ' + error.message);
+      } else {
+        if (subAreaSelecionada === idSub) setSubAreaSelecionada(null);
+        carregarDadosDaParte(parteSelecionada); 
+      }
+    }
+  };
 
   // --- BUSCA GLOBAL ---
   useEffect(() => {
@@ -176,9 +183,7 @@ function App() {
   async function realizarBusca(texto) {
     setBuscando(true);
     setParteSelecionada(null);
-    const { data } = await supabase
-      .from('protocols')
-      .select('*, body_parts(display_name)')
+    const { data } = await supabase.from('protocols').select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%, locais.ilike.%${texto}%, exame.ilike.%${texto}%`)
       .limit(20);
     setResultadosBusca(data || []);
@@ -191,20 +196,10 @@ function App() {
       
       {/* COMPONENTES FLUTUANTES */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
-      
-      {/* Nosso Modal Novo */}
-      <ModalForm 
-        isOpen={modalAberto} 
-        onClose={() => setModalAberto(false)} 
-        onSave={salvarDadosDoModal}
-        itemEdicao={itemEmEdicao}
-      />
-
-      {/* Nossa Notificação Nova */}
+      <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
-
-      {/* HEADER */}
+      {/* HEADER PRINCIPAL */}
       <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--borda)', flexShrink: 0 }}>
         <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--destaque)' }}>SISREG<span style={{ fontSize: '10px', opacity: 0.7 }}>PRO</span></div>
         
@@ -229,9 +224,10 @@ function App() {
         </div>
       </header>
 
-      {/* BODY */}
+      {/* CONTEÚDO PRINCIPAL */}
       <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         
+        {/* ESQUERDA: CORPO HUMANO */}
         <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
           <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
@@ -239,9 +235,10 @@ function App() {
           </div>
         </section>
 
+        {/* DIREITA: LISTAS E DETALHES */}
         <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
-          
           {termoBusca.length > 0 ? (
+            // --- RESULTADOS DA BUSCA ---
             <div style={{ animation: 'fadeIn 0.3s' }}>
               <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
               <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
@@ -255,23 +252,84 @@ function App() {
             </div>
           ) : (
             parteSelecionada ? (
+              // --- DETALHES DA PARTE SELECIONADA ---
               <div style={{ animation: 'fadeIn 0.3s' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 style={{ color: 'var(--destaque)', margin: 0, textTransform: 'capitalize' }}>{parteSelecionada.replace(/-/g, ' ')}</h2>
-                  {modoEdicao && isAdmin && <button onClick={abrirModalCriar} style={{ background: 'var(--destaque)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.2)' }}>+ Novo Protocolo</button>}
-                </div>
+                
+                {/* Cabeçalho da Seção (Título + Botões Criar) */}
+                <HeaderSecao 
+                  parteSelecionada={parteSelecionada}
+                  isAdmin={isAdmin}
+                  modoEdicao={modoEdicao}
+                  aoAbrirModalProtocolo={abrirModalCriar}
+                  aoAtualizar={() => carregarDadosDaParte(parteSelecionada)}
+                />
 
+                {/* Lista de Submenus (Categorias) */}
                 {subMenus.length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '20px 0' }}>
-                    <button onClick={() => setSubAreaSelecionada(null)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === null ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === null ? '#fff' : 'var(--destaque)' }}>Todos</button>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
+                    
+                    {/* Botão "Todos" */}
+                    <button 
+                      onClick={() => setSubAreaSelecionada(null)} 
+                      style={{ 
+                        padding: '6px 12px', 
+                        borderRadius: '15px', 
+                        border: '1px solid var(--destaque)', 
+                        cursor: 'pointer', 
+                        fontSize: '13px', 
+                        background: subAreaSelecionada === null ? 'var(--destaque)' : 'transparent', 
+                        color: subAreaSelecionada === null ? '#fff' : 'var(--destaque)' 
+                      }}
+                    >
+                      Todos
+                    </button>
+
+                    {/* Submenus com opção de apagar */}
                     {subMenus.map(sub => (
-                      <button key={sub.id} onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
+                      <div key={sub.id} style={{ position: 'relative' }}>
+                        <button 
+                          onClick={() => setSubAreaSelecionada(sub.id)} 
+                          style={{ 
+                            padding: '6px 12px', 
+                            borderRadius: '15px', 
+                            border: '1px solid var(--destaque)', 
+                            cursor: 'pointer', 
+                            fontSize: '13px', 
+                            background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', 
+                            color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' 
+                          }}
+                        >
+                          {sub.name}
+                        </button>
+                        
+                        {/* Botão de Apagar (X) - Só aparece editando */}
+                        {modoEdicao && isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              apagarSubMenu(sub.id, sub.name);
+                            }}
+                            style={{
+                              position: 'absolute', top: '-8px', right: '-8px',
+                              width: '20px', height: '20px', borderRadius: '50%',
+                              backgroundColor: '#ff5252', color: 'white', border: 'none',
+                              fontSize: '10px', fontWeight: 'bold', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5
+                            }}
+                            title="Apagar Categoria"
+                          >
+                            X
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
                 
                 <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
                 
+                {/* Lista de Protocolos */}
                 {loading && <p>Carregando...</p>}
                 {!loading && protocolosVisiveis.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -286,6 +344,7 @@ function App() {
                 )}
               </div>
             ) : (
+              // --- ESTADO VAZIO ---
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
                 <span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3>
               </div>
@@ -297,6 +356,7 @@ function App() {
   );
 }
 
+// COMPONENTE AUXILIAR DO CARD
 const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag }) => {
   const renderLocais = (textoLocais) => {
     if (!textoLocais) return null;
@@ -308,7 +368,6 @@ const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag })
       </span>
     ));
   };
-
   return (
     <div style={{ padding: '15px', borderRadius: '8px', backgroundColor: 'var(--bg-pagina)', borderLeft: '4px solid var(--destaque)', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
       {showTag && item.body_parts && <span style={{ fontSize:'10px', textTransform:'uppercase', background:'var(--destaque)', color:'#fff', padding:'2px 6px', borderRadius:'4px', marginBottom:'5px', display:'inline-block' }}>{item.body_parts.display_name}</span>}
