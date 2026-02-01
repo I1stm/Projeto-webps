@@ -1,16 +1,66 @@
-# React + Vite
+# 🏥 SISREG PRO - Sistema de Regulação de Protocolos Médicos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Sistema web interativo para consulta e gestão de protocolos médicos e de regulação, com foco em usabilidade, performance e segurança de dados.
 
-Currently, two official plugins are available:
+![Status](https://img.shields.io/badge/STATUS-EM_DESENVOLVIMENTO-green)
+![Tech](https://img.shields.io/badge/STACK-REACT_%7C_SUPABASE-blue)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎯 Sobre o Projeto
 
-## React Compiler
+O **SISREG PRO** foi desenvolvido para otimizar o processo de consulta de diretrizes médicas. Diferente de PDFs estáticos ou planilhas extensas, o sistema oferece uma interface visual baseada na anatomia humana, permitindo que o regulador encontre a informação necessária com poucos cliques.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+O projeto implementa uma arquitetura **Full Stack Serverless**, utilizando React no Frontend e Supabase (PostgreSQL) no Backend, com forte ênfase em Segurança a Nível de Banco de Dados (RLS).
 
-## Expanding the ESLint configuration
+## 🚀 Funcionalidades Principais
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🧠 Navegação Intuitiva
+- **Mapa Corporal Interativo (SVG):** Seleção de protocolos clicando diretamente nas partes do corpo (Frente/Costas).
+- **Busca Global Indexada:** Pesquisa rápida por problema, tipo de exame ou códigos.
+- **Dark Mode:** Interface adaptável para conforto visual.
+
+### 🛡️ Segurança e Controle de Acesso (RBAC)
+O sistema possui uma hierarquia de permissões rigorosa implementada no Backend:
+
+1.  **👑 Super Admin:**
+    - Acesso total ao sistema.
+    - **Gestão de Equipe:** Poder exclusivo para promover ou rebaixar usuários.
+    - Visualização de logs de auditoria (em roadmap).
+2.  **🔒 Admin:**
+    - Pode Criar, Editar e Excluir protocolos e subáreas.
+    - Não tem acesso à gestão de usuários.
+3.  **👤 User:**
+    - Acesso apenas para leitura e consulta.
+4.  **Visitante:**
+    - Bloqueio total. O sistema exige autenticação para exibir qualquer dado.
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend:** React.js (Vite), CSS Modules (Responsivo).
+- **Backend / Database:** Supabase (PostgreSQL).
+- **Autenticação:** Supabase Auth (Email/Password).
+- **Segurança:** PostgreSQL Row Level Security (RLS).
+- **Deploy:** Vercel.
+
+## 🔒 Arquitetura de Segurança (Destaque Técnico)
+
+Este projeto não depende apenas do Frontend para segurança. As regras são aplicadas diretamente no banco de dados via **RLS (Row Level Security)**.
+
+- **Proteção contra ataques via F12:** Mesmo que um usuário mal-intencionado manipule o estado do React para habilitar botões de "Excluir", o banco de dados rejeitará a requisição se o token de sessão não tiver a `role` correta.
+- **Prevenção de Loops Infinitos:** Utilização de funções `SECURITY DEFINER` para checagem de cargos sem causar recursividade nas políticas de acesso.
+- **Triggers Automáticos:** Gatilhos SQL (`plpgsql`) que criam automaticamente o perfil do usuário e definem permissões padrão ao registrar uma nova conta.
+
+## 📂 Estrutura do Banco de Dados
+
+O esquema do banco de dados inclui:
+- `protocols`: Tabela principal com regras de negócio.
+- `body_parts` & `sub_areas`: Tabelas relacionais para categorização.
+- `profiles`: Extensão da tabela de usuários para gestão de cargos (roles).
+- `audit_logs`: Registro de alterações para compliance.
+
+*O esquema completo pode ser encontrado no arquivo `database_schema.sql` na raiz do projeto.*
+
+## 💻 Como Rodar Localmente
+
+1. Clone o repositório:
+```bash
+git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
