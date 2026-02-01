@@ -62,7 +62,7 @@ function App() {
     setIsAdmin(data?.role === 'admin');
   }
 
-  // --- CARREGAMENTO DE DADOS ---
+  // --- CARREGAMENTO DE DADOS DA PARTE SELECIONADA ---
   useEffect(() => {
     if (parteSelecionada) {
       setTermoBusca('');
@@ -94,6 +94,41 @@ function App() {
   const protocolosVisiveis = subAreaSelecionada
     ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada)
     : listaProtocolos;
+
+  // --- BUSCA GLOBAL (CORRIGIDA) ---
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (termoBusca.length > 2) realizarBusca(termoBusca);
+      else setResultadosBusca([]);
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [termoBusca]);
+
+  async function realizarBusca(texto) {
+    setBuscando(true);
+    setParteSelecionada(null); // Limpa seleção para mostrar a busca
+
+    // Correção: string do .or() sem espaços após as vírgulas
+    const { data, error } = await supabase
+      .from('protocols')
+      .select('*, body_parts(display_name)') // Tenta trazer o nome da parte do corpo
+      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`)
+      .limit(20);
+
+    if (error) {
+      console.error("Erro na busca:", error);
+      // Fallback: Se der erro (ex: relação body_parts não existe), tenta buscar simples
+      const { data: dataBackup } = await supabase
+        .from('protocols')
+        .select('*')
+        .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`)
+        .limit(20);
+      setResultadosBusca(dataBackup || []);
+    } else {
+      setResultadosBusca(data || []);
+    }
+    setBuscando(false);
+  }
 
   // --- FUNÇÕES DO MODAL (CRIAR/EDITAR) ---
   const abrirModalCriar = () => {
@@ -154,7 +189,7 @@ function App() {
     }
   };
 
-  // --- FUNÇÃO DE REMOVER SUBMENU (NOVA) ---
+  // --- FUNÇÃO DE REMOVER SUBMENU ---
   const apagarSubMenu = async (idSub, nomeSub) => {
     if (!isAdmin || !modoEdicao) return;
     const confirmacao = window.confirm(
@@ -170,25 +205,6 @@ function App() {
       }
     }
   };
-
-  // --- BUSCA GLOBAL ---
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      if (termoBusca.length > 2) realizarBusca(termoBusca);
-      else setResultadosBusca([]);
-    }, 500);
-    return () => clearTimeout(delayDebounce);
-  }, [termoBusca]);
-
-  async function realizarBusca(texto) {
-    setBuscando(true);
-    setParteSelecionada(null);
-    const { data } = await supabase.from('protocols').select('*, body_parts(display_name)')
-      .or(`problema.ilike.%${texto}%, locais.ilike.%${texto}%, exame.ilike.%${texto}%`)
-      .limit(20);
-    setResultadosBusca(data || []);
-    setBuscando(false);
-  }
 
   // --- RENDERIZAÇÃO ---
   return (
