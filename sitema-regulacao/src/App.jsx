@@ -52,6 +52,7 @@ function App() {
       } else {
         setIsAdmin(false);
         setModoEdicao(false);
+        setParteSelecionada(null); // Reseta seleção ao deslogar
       }
     });
     return () => subscription.unsubscribe();
@@ -95,7 +96,7 @@ function App() {
     ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada)
     : listaProtocolos;
 
-  // --- BUSCA GLOBAL (CORRIGIDA) ---
+  // --- BUSCA GLOBAL ---
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (termoBusca.length > 2) realizarBusca(termoBusca);
@@ -106,18 +107,17 @@ function App() {
 
   async function realizarBusca(texto) {
     setBuscando(true);
-    setParteSelecionada(null); // Limpa seleção para mostrar a busca
+    setParteSelecionada(null);
 
-    // Correção: string do .or() sem espaços após as vírgulas
     const { data, error } = await supabase
       .from('protocols')
-      .select('*, body_parts(display_name)') // Tenta trazer o nome da parte do corpo
+      .select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`)
       .limit(20);
 
     if (error) {
       console.error("Erro na busca:", error);
-      // Fallback: Se der erro (ex: relação body_parts não existe), tenta buscar simples
+      // Fallback
       const { data: dataBackup } = await supabase
         .from('protocols')
         .select('*')
@@ -210,25 +210,30 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       
-      {/* COMPONENTES FLUTUANTES */}
+      {/* MODAIS E TOASTS */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
-      {/* HEADER PRINCIPAL */}
+      {/* HEADER */}
       <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--borda)', flexShrink: 0 }}>
         <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--destaque)' }}>SISREG<span style={{ fontSize: '10px', opacity: 0.7 }}>PRO</span></div>
         
-        <div style={{ flex: 1, maxWidth: '400px', margin: '0 20px', position: 'relative' }}>
-          <span style={{position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)'}}>🔍</span>
-          <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
-            style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
-          {termoBusca && <button onClick={() => setTermoBusca('')} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', border:'none', background:'transparent', cursor:'pointer', color:'var(--texto-secundario)'}}>✖</button>}
-        </div>
+        {/* BUSCA (SÓ LOGADO) */}
+        {sessao && (
+          <div style={{ flex: 1, maxWidth: '400px', margin: '0 20px', position: 'relative' }}>
+            <span style={{position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)'}}>🔍</span>
+            <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
+              style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
+            {termoBusca && <button onClick={() => setTermoBusca('')} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', border:'none', background:'transparent', cursor:'pointer', color:'var(--texto-secundario)'}}>✖</button>}
+          </div>
+        )}
 
+        {/* CONTROLES DO USUÁRIO */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {sessao?.user?.email && <div style={{ textAlign: 'right', fontSize: '12px' }}><span style={{ color: 'var(--texto-secundario)' }}>Olá, </span><span style={{ color: 'var(--destaque)', fontWeight: 'bold' }}>{sessao.user.email}</span></div>}
           <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
+          
           {!sessao ? (
             <button onClick={() => setMostrarLogin(true)} style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Entrar</button>
           ) : (
@@ -241,132 +246,105 @@ function App() {
       </header>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <main style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         
-        {/* ESQUERDA: CORPO HUMANO */}
-        <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
-          <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
-            <CorpoHumano aoSelecionar={setParteSelecionada} parteAtiva={parteSelecionada} vista={vista} />
+        {!sessao ? (
+          // --- TELA DE BLOQUEIO ---
+          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto-primario)', textAlign: 'center', padding: '20px' }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔒</div>
+            <h1 style={{ color: 'var(--destaque)' }}>Acesso Restrito</h1>
+            <p style={{ maxWidth: '400px', lineHeight: '1.6', color: 'var(--texto-secundario)', marginBottom: '30px' }}>
+              Este sistema contém protocolos clínicos e dados sensíveis. <br/>
+              Por favor, faça login para acessar os guias e procedimentos.
+            </p>
+            <button 
+              onClick={() => setMostrarLogin(true)} 
+              style={{ 
+                padding: '12px 30px', 
+                fontSize: '16px', 
+                backgroundColor: 'var(--destaque)', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '8px', 
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+              }}
+            >
+              Fazer Login no Sistema
+            </button>
           </div>
-        </section>
+        ) : (
+          // --- SISTEMA COMPLETO (SÓ CARREGA SE LOGADO) ---
+          <>
+            {/* ESQUERDA: CORPO HUMANO */}
+            <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
+              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
+                <CorpoHumano aoSelecionar={setParteSelecionada} parteAtiva={parteSelecionada} vista={vista} />
+              </div>
+            </section>
 
-        {/* DIREITA: LISTAS E DETALHES */}
-        <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
-          {termoBusca.length > 0 ? (
-            // --- RESULTADOS DA BUSCA ---
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
-              <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
-              {!buscando && resultadosBusca.length > 0 ? (
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                   {resultadosBusca.map((item) => (
-                     <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={(id) => remover(id, 'busca')} showTag={true} />
-                   ))}
-                 </div>
-              ) : <p>Nada encontrado.</p>}
-            </div>
-          ) : (
-            parteSelecionada ? (
-              // --- DETALHES DA PARTE SELECIONADA ---
-              <div style={{ animation: 'fadeIn 0.3s' }}>
-                
-                {/* Cabeçalho da Seção (Título + Botões Criar) */}
-                <HeaderSecao 
-                  parteSelecionada={parteSelecionada}
-                  isAdmin={isAdmin}
-                  modoEdicao={modoEdicao}
-                  aoAbrirModalProtocolo={abrirModalCriar}
-                  aoAtualizar={() => carregarDadosDaParte(parteSelecionada)}
-                />
-
-                {/* Lista de Submenus (Categorias) */}
-                {subMenus.length > 0 && (
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
-                    
-                    {/* Botão "Todos" */}
-                    <button 
-                      onClick={() => setSubAreaSelecionada(null)} 
-                      style={{ 
-                        padding: '6px 12px', 
-                        borderRadius: '15px', 
-                        border: '1px solid var(--destaque)', 
-                        cursor: 'pointer', 
-                        fontSize: '13px', 
-                        background: subAreaSelecionada === null ? 'var(--destaque)' : 'transparent', 
-                        color: subAreaSelecionada === null ? '#fff' : 'var(--destaque)' 
-                      }}
-                    >
-                      Todos
-                    </button>
-
-                    {/* Submenus com opção de apagar */}
-                    {subMenus.map(sub => (
-                      <div key={sub.id} style={{ position: 'relative' }}>
-                        <button 
-                          onClick={() => setSubAreaSelecionada(sub.id)} 
-                          style={{ 
-                            padding: '6px 12px', 
-                            borderRadius: '15px', 
-                            border: '1px solid var(--destaque)', 
-                            cursor: 'pointer', 
-                            fontSize: '13px', 
-                            background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', 
-                            color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' 
-                          }}
-                        >
-                          {sub.name}
-                        </button>
-                        
-                        {/* Botão de Apagar (X) - Só aparece editando */}
-                        {modoEdicao && isAdmin && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              apagarSubMenu(sub.id, sub.name);
-                            }}
-                            style={{
-                              position: 'absolute', top: '-8px', right: '-8px',
-                              width: '20px', height: '20px', borderRadius: '50%',
-                              backgroundColor: '#ff5252', color: 'white', border: 'none',
-                              fontSize: '10px', fontWeight: 'bold', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5
-                            }}
-                            title="Apagar Categoria"
-                          >
-                            X
-                          </button>
-                        )}
+            {/* DIREITA: LISTAS E DETALHES */}
+            <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
+              {termoBusca.length > 0 ? (
+                // --- RESULTADOS DA BUSCA ---
+                <div style={{ animation: 'fadeIn 0.3s' }}>
+                  <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
+                  <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
+                  {!buscando && resultadosBusca.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {resultadosBusca.map((item) => (
+                        <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={(id) => remover(id, 'busca')} showTag={true} />
+                      ))}
+                    </div>
+                  ) : <p>Nada encontrado.</p>}
+                </div>
+              ) : (
+                parteSelecionada ? (
+                  // --- DETALHES DA PARTE SELECIONADA ---
+                  <div style={{ animation: 'fadeIn 0.3s' }}>
+                    <HeaderSecao 
+                      parteSelecionada={parteSelecionada}
+                      isAdmin={isAdmin}
+                      modoEdicao={modoEdicao}
+                      aoAbrirModalProtocolo={abrirModalCriar}
+                      aoAtualizar={() => carregarDadosDaParte(parteSelecionada)}
+                    />
+                    {subMenus.length > 0 && (
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
+                        <button onClick={() => setSubAreaSelecionada(null)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === null ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === null ? '#fff' : 'var(--destaque)' }}>Todos</button>
+                        {subMenus.map(sub => (
+                          <div key={sub.id} style={{ position: 'relative' }}>
+                            <button onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
+                            {modoEdicao && isAdmin && (
+                              <button onClick={(e) => { e.stopPropagation(); apagarSubMenu(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '-8px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ff5252', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }}>X</button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-                
-                <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
-                
-                {/* Lista de Protocolos */}
-                {loading && <p>Carregando...</p>}
-                {!loading && protocolosVisiveis.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {protocolosVisiveis.map((item) => (
-                      <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />
-                    ))}
+                    )}
+                    <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
+                    {loading && <p>Carregando...</p>}
+                    {!loading && protocolosVisiveis.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {protocolosVisiveis.map((item) => (
+                          <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />
+                        ))}
+                      </div>
+                    ) : (
+                      !loading && <div style={{textAlign:'center', color:'var(--texto-secundario)', padding:'20px', border:'2px dashed var(--borda)', borderRadius:'10px'}}><p>Nenhum protocolo nesta seção.</p></div>
+                    )}
                   </div>
                 ) : (
-                  !loading && <div style={{textAlign:'center', color:'var(--texto-secundario)', padding:'20px', border:'2px dashed var(--borda)', borderRadius:'10px'}}>
-                    <p>Nenhum protocolo nesta seção.</p>
+                  // --- ESTADO VAZIO (Esperando clique) ---
+                  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
+                    <span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3>
                   </div>
-                )}
-              </div>
-            ) : (
-              // --- ESTADO VAZIO ---
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
-                <span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3>
-              </div>
-            )
-          )}
-        </section>
+                )
+              )}
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
