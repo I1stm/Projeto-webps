@@ -7,6 +7,7 @@ import Toast from './Toast';
 import './App.css'; 
 import HeaderSecao from './HeaderSecao';
 
+// Versão nova Super Admin
 function App() {
   // --- ESTADOS GERAIS ---
   const [darkMode, setDarkMode] = useState(true);
