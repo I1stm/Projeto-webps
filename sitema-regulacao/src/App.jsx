@@ -74,6 +74,8 @@ function App() {
   async function checarPermissoes(userId) {
     console.log("🔍 [DIAGNÓSTICO] Buscando perfil para ID:", userId);
     
+    // Agora usamos a função segura no banco, mas para o front basta ler a tabela profiles
+    // pois o RLS 'Ver Proprio Perfil' já deve estar ativo.
     const { data, error } = await supabase
       .from('profiles')
       .select('role')
@@ -82,21 +84,17 @@ function App() {
 
     if (error) {
       console.error("❌ [DIAGNÓSTICO] Erro ao buscar perfil:", error.message);
-      console.warn("DICA: Se o erro for de 'Policy', verifique o RLS no Supabase.");
     } 
     
     if (data) {
       console.log("✅ [DIAGNÓSTICO] Perfil encontrado! Cargo:", data.role);
-      
-      // Lógica de Hierarquia
       const ehSuper = data.role === 'super_admin';
-      const ehAdmin = data.role === 'admin' || ehSuper; // Super Admin também é Admin
+      const ehAdmin = data.role === 'admin' || ehSuper; 
 
       setIsAdmin(ehAdmin);
       setIsSuperAdmin(ehSuper);
     } else {
       console.warn("⚠️ [DIAGNÓSTICO] Usuário logado, mas SEM PERFIL na tabela 'profiles'.");
-      console.warn("DICA: Crie a linha manualmente na tabela profiles.");
     }
   }
 
@@ -146,15 +144,15 @@ function App() {
     setBuscando(true);
     setParteSelecionada(null);
     
+    // Atualizado para buscar também em 'informacoes'
     const { data, error } = await supabase
       .from('protocols')
       .select('*, body_parts(display_name)')
-      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`)
+      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`)
       .limit(20);
     
     if (error) {
        console.error("Erro na busca", error);
-       // Fallback simples
        const { data: dataBackup } = await supabase
         .from('protocols')
         .select('*')
@@ -184,19 +182,25 @@ function App() {
     setModalAberto(false);
     try {
       if (itemEmEdicao) {
-        // UPDATE
+        // UPDATE COM NOVO CAMPO
         const { error } = await supabase.from('protocols')
-          .update({ problema: dados.problema, locais: dados.locais, exame: dados.exame })
+          .update({ 
+            problema: dados.problema, 
+            locais: dados.locais, 
+            informacoes: dados.informacoes, // Novo
+            exame: dados.exame 
+          })
           .eq('id', itemEmEdicao.id);
         if (error) throw error;
         setToast({ mensagem: 'Atualizado!', tipo: 'sucesso' });
       } else {
-        // INSERT
+        // INSERT COM NOVO CAMPO
         const { error } = await supabase.from('protocols').insert([{ 
           body_part_id: parteSelecionada, 
           sub_area_id: subAreaSelecionada, 
           problema: dados.problema, 
           locais: dados.locais, 
+          informacoes: dados.informacoes, // Novo
           exame: dados.exame || "Consulta" 
         }]);
         if (error) throw error;
@@ -230,29 +234,19 @@ function App() {
     }
   };
 
-  // --- FUNÇÕES DE SUPER ADMIN (GESTÃO DE EQUIPE) ---
+  // --- FUNÇÕES DE SUPER ADMIN ---
   const abrirModalUsuarios = async () => {
     if (!isSuperAdmin) return;
     setModalUsuariosAberto(true);
-    // Busca todos os perfis
     const { data, error } = await supabase.from('profiles').select('*').order('email');
-    if (error) {
-      alert("Erro ao carregar equipe: " + error.message);
-    } else {
-      setListaUsuarios(data || []);
-    }
+    if (!error) setListaUsuarios(data || []);
   };
 
   const alterarCargo = async (idUsuario, novoCargo) => {
     if (!window.confirm(`Mudar cargo para ${novoCargo.toUpperCase()}?`)) return;
-    
     const { error } = await supabase.from('profiles').update({ role: novoCargo }).eq('id', idUsuario);
-    
-    if (error) {
-      alert('Erro ao alterar: ' + error.message);
-    } else {
+    if (!error) {
       setToast({ mensagem: 'Cargo atualizado!', tipo: 'sucesso' });
-      // Atualiza a lista na tela
       const { data } = await supabase.from('profiles').select('*').order('email');
       setListaUsuarios(data || []);
     }
@@ -262,12 +256,12 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       
-      {/* COMPONENTES FLUTUANTES */}
+      {/* MODAIS */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
-      {/* MODAL DE GESTÃO DE EQUIPE (SUPER ADMIN) */}
+      {/* MODAL EQUIPE */}
       {modalUsuariosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
@@ -275,37 +269,19 @@ function App() {
               <h2 style={{ margin: 0, color: 'var(--destaque)' }}>Gestão da Equipe</h2>
               <button onClick={() => setModalUsuariosAberto(false)} style={{ background: 'none', border: 'none', color: 'var(--texto-primario)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
-            
             <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--texto-primario)' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}>
-                  <th style={{ padding: '10px' }}>Email</th>
-                  <th style={{ padding: '10px' }}>Cargo</th>
-                  <th style={{ padding: '10px', textAlign: 'right' }}>Ação</th>
-                </tr>
+                <tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr>
               </thead>
               <tbody>
                 {listaUsuarios.map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
-                    <td style={{ padding: '10px', fontSize:'14px' }}>
-                      {u.email} {u.role === 'super_admin' && '👑'}
-                    </td>
-                    <td style={{ padding: '10px' }}>
-                      <span style={{ 
-                        padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
-                        backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)',
-                        color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)'
-                      }}>
-                        {u.role ? u.role.toUpperCase() : 'USER'}
-                      </span>
-                    </td>
+                    <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
+                    <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
                     <td style={{ padding: '10px', textAlign: 'right' }}>
-                      {u.role !== 'super_admin' && (
-                        u.role === 'admin' ? (
-                          <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button>
-                        ) : (
-                          <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
-                        )
+                      {u.role !== 'super_admin' && (u.role === 'admin' ? 
+                        <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
+                        <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
                       )}
                     </td>
                   </tr>
@@ -324,63 +300,30 @@ function App() {
         {sessao && (
           <div style={{ flex: 1, maxWidth: '400px', margin: '0 20px', position: 'relative' }}>
             <span style={{position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)'}}>🔍</span>
-            <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
-              style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
+            <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
             {termoBusca && <button onClick={() => setTermoBusca('')} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', border:'none', background:'transparent', cursor:'pointer', color:'var(--texto-secundario)'}}>✖</button>}
           </div>
         )}
 
-        {/* CONTROLES DO USUÁRIO */}
+        {/* CONTROLES */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {sessao?.user?.email && (
-            <div style={{ textAlign: 'right', fontSize: '12px' }}>
-              <span style={{ color: 'var(--texto-secundario)' }}>Olá, </span>
-              <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>
-                {sessao.user.email} {isSuperAdmin && '👑'}
-              </span>
-            </div>
-          )}
-          
+          {sessao?.user?.email && <div style={{ textAlign: 'right', fontSize: '12px' }}><span style={{ color: 'var(--texto-secundario)' }}>Olá, </span><span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>{sessao.user.email} {isSuperAdmin && '👑'}</span></div>}
           <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
-          
           {!sessao ? (
             <button onClick={() => setMostrarLogin(true)} style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Entrar</button>
           ) : (
             <>
-              {/* BOTÃO EQUIPE (SÓ SUPER ADMIN) */}
-              {isSuperAdmin && (
-                <button 
-                  onClick={abrirModalUsuarios} 
-                  style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #FFD700', color: '#FFD700', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}
-                >
-                  👥 Equipe
-                </button>
-              )}
-
-              {/* BOTÃO ADMIN/EDITAR */}
-              {isAdmin && (
-                <button 
-                  onClick={() => setModoEdicao(!modoEdicao)} 
-                  style={{ 
-                    padding: '6px 12px', borderRadius: '20px', 
-                    border: `1px solid ${modoEdicao ? '#ff5252' : 'var(--borda)'}`, 
-                    color: modoEdicao ? '#ff5252' : 'var(--texto-secundario)', 
-                    background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' 
-                  }}
-                >
-                  {modoEdicao ? '🔓 EDITANDO' : '🔒 ADMIN'}
-                </button>
-              )}
+              {isSuperAdmin && <button onClick={abrirModalUsuarios} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #FFD700', color: '#FFD700', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}>👥 Equipe</button>}
+              {isAdmin && <button onClick={() => setModoEdicao(!modoEdicao)} style={{ padding: '6px 12px', borderRadius: '20px', border: `1px solid ${modoEdicao ? '#ff5252' : 'var(--borda)'}`, color: modoEdicao ? '#ff5252' : 'var(--texto-secundario)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>{modoEdicao ? '🔓 EDITANDO' : '🔒 ADMIN'}</button>}
               <button onClick={() => supabase.auth.signOut()} style={{ fontSize: '12px', color: 'var(--texto-secundario)', background:'none', border:'none', cursor:'pointer', textDecoration: 'underline' }}>Sair</button>
             </>
           )}
         </div>
       </header>
 
-      {/* CONTEÚDO PRINCIPAL */}
+      {/* CONTEÚDO */}
       <main style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         {!sessao ? (
-          // --- TELA DE BLOQUEIO ---
           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto-primario)', textAlign: 'center', padding: '20px' }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔒</div>
             <h1 style={{ color: 'var(--destaque)' }}>Acesso Restrito</h1>
@@ -388,32 +331,22 @@ function App() {
             <button onClick={() => setMostrarLogin(true)} style={{ padding: '12px 30px', fontSize: '16px', backgroundColor: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fazer Login</button>
           </div>
         ) : (
-          // --- SISTEMA LOGADO ---
           <>
-            {/* ÁREA ESQUERDA: CORPO */}
             <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
-              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
-                <CorpoHumano aoSelecionar={setParteSelecionada} parteAtiva={parteSelecionada} vista={vista} />
-              </div>
+              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}><CorpoHumano aoSelecionar={setParteSelecionada} parteAtiva={parteSelecionada} vista={vista} /></div>
             </section>
-
-            {/* ÁREA DIREITA: DADOS */}
             <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
               {termoBusca.length > 0 ? (
-                // RESULTADOS BUSCA
                 <div style={{ animation: 'fadeIn 0.3s' }}>
                   <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
                   <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
                   {!buscando && resultadosBusca.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      {resultadosBusca.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={(id) => remover(id, 'busca')} showTag={true} />)}
-                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>{resultadosBusca.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={(id) => remover(id, 'busca')} showTag={true} />)}</div>
                   ) : <p>Nada encontrado.</p>}
                 </div>
               ) : (
                 parteSelecionada ? (
-                  // LISTA DA PARTE DO CORPO
                   <div style={{ animation: 'fadeIn 0.3s' }}>
                     <HeaderSecao parteSelecionada={parteSelecionada} isAdmin={isAdmin} modoEdicao={modoEdicao} aoAbrirModalProtocolo={abrirModalCriar} aoAtualizar={() => carregarDadosDaParte(parteSelecionada)} />
                     {subMenus.length > 0 && (
@@ -430,17 +363,10 @@ function App() {
                     <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
                     {loading && <p>Carregando...</p>}
                     {!loading && protocolosVisiveis.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {protocolosVisiveis.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />)}
-                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>{protocolosVisiveis.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />)}</div>
                     ) : (!loading && <div style={{textAlign:'center', color:'var(--texto-secundario)', padding:'20px', border:'2px dashed var(--borda)', borderRadius:'10px'}}><p>Nenhum protocolo nesta seção.</p></div>)}
                   </div>
-                ) : (
-                  // ESTADO VAZIO
-                  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
-                    <span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3>
-                  </div>
-                )
+                ) : <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}><span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3></div>
               )}
             </section>
           </>
@@ -450,14 +376,32 @@ function App() {
   );
 }
 
-// COMPONENTE CARD
+// COMPONENTE CARD ATUALIZADO
 const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag }) => {
   const renderLocais = (texto) => texto ? texto.split('/').map((p, i, a) => <span key={i}>{p.trim()}{i < a.length - 1 && <span style={{ color: 'var(--destaque)', fontWeight: 'bold', margin: '0 6px' }}>/</span>}</span>) : null;
+  
   return (
     <div style={{ padding: '15px', borderRadius: '8px', backgroundColor: 'var(--bg-pagina)', borderLeft: '4px solid var(--destaque)', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
       {showTag && item.body_parts && <span style={{ fontSize:'10px', textTransform:'uppercase', background:'var(--destaque)', color:'#fff', padding:'2px 6px', borderRadius:'4px', marginBottom:'5px', display:'inline-block' }}>{item.body_parts.display_name}</span>}
+      
       <h4 style={{ margin: '0 0 8px 0', color: 'var(--texto-primario)', fontSize: '16px' }}>{item.problema}</h4>
-      <div style={{ fontSize: '13px', color: 'var(--texto-secundario)' }}><div>🏥 <strong style={{color:'var(--texto-primario)'}}>Local:</strong> {renderLocais(item.locais)}</div><div>📋 <strong style={{color:'var(--texto-primario)'}}>Exame:</strong> {item.exame}</div></div>
+      
+      <div style={{ fontSize: '13px', color: 'var(--texto-secundario)', display:'flex', flexDirection:'column', gap:'6px' }}>
+        {/* LOCAL */}
+        <div>🏥 <strong style={{color:'var(--texto-primario)'}}>Local:</strong> {renderLocais(item.locais)}</div>
+        
+        {/* NOVA FUNÇÃO: INFORMAÇÕES (Só aparece se tiver algo escrito) */}
+        {item.informacoes && (
+          <div style={{ background: 'rgba(128,128,128,0.1)', padding: '8px', borderRadius: '4px', borderLeft: '2px solid var(--texto-secundario)' }}>
+            ℹ️ <strong style={{color:'var(--texto-primario)'}}>Info:</strong> <span style={{whiteSpace: 'pre-line'}}>{item.informacoes}</span>
+          </div>
+        )}
+        
+        {/* EXAME */}
+        <div>📋 <strong style={{color:'var(--texto-primario)'}}>Exame:</strong> {item.exame}</div>
+      </div>
+
+      {/* BOTÕES DE EDIÇÃO */}
       {modoEdicao && isAdmin && <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}><button onClick={() => onEdit(item)} style={{ border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px', fontWeight: 'bold' }}>Editar</button><button onClick={() => onRemove(item.id)} style={{ border: '1px solid #ff5252', color: '#ff5252', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px' }}>X</button></div>}
     </div>
   );
