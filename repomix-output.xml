@@ -1,0 +1,2039 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+sitema-regulacao/
+  public/
+    vite.svg
+  src/
+    App.css
+    App.jsx
+    CorpoHumano.jsx
+    DadosRegulacao.js
+    database_schema.sql
+    HeaderSecao.jsx
+    Layout.jsx
+    Login.jsx
+    main.jsx
+    ModalForm.jsx
+    supabaseClient.js
+    Toast.jsx
+    ViewerCorpo.jsx
+  .gitignore
+  eslint.config.js
+  index.html
+  package.json
+  README.md
+  vercel.json
+  vite.config.js
+package.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="sitema-regulacao/public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="sitema-regulacao/src/App.css">
+/* =========================================
+   1. DEFINIÇÃO DAS CORES (TEMA VERDE)
+   ========================================= */
+:root {
+  /* TEMA CLARO (Dia) */
+  --bg-pagina: #f0f2f5;
+  --bg-card: #ffffff;
+  --texto-primario: #2c3e50;
+  --texto-secundario: #607d8b;
+  --borda: #dce0e5;
+  
+  /* O VERDE (Claro) */
+  --destaque: #2e7d32;        /* Verde Esmeralda Escuro */
+  --destaque-suave: #e8f5e9;  /* Fundo verde bem clarinho */
+  
+  --boneco-base: #cfd8dc;     /* Cinza azulado claro */
+  --boneco-hover: #b0bec5;
+  --input-bg: #ffffff;
+}
+
+/* TEMA ESCURO (Noite) */
+body.dark-mode {
+  --bg-pagina: #121212;
+  --bg-card: #1e1e1e;
+  --texto-primario: #e0e0e0;
+  --texto-secundario: #b0bec5;
+  --borda: #333333;
+
+  /* O VERDE (Escuro - Neon) */
+  --destaque: #00e676;        /* Verde Matrix/Neon */
+  --destaque-suave: #1b5e20;  /* Verde musgo escuro para fundos */
+  
+  --boneco-base: #424242;     /* Cinza chumbo */
+  --boneco-hover: #616161;
+  --input-bg: #2c2c2c;
+}
+
+/* =========================================
+   2. GERAL
+   ========================================= */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-pagina);
+  color: var(--texto-primario);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s ease;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Bonita */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-pagina); }
+::-webkit-scrollbar-thumb { background: var(--borda); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--destaque); }
+</file>
+
+<file path="sitema-regulacao/src/DadosRegulacao.js">
+export const dadosRegulacao = {
+  // ==========================================================
+  // 1. REGIÃO DA CABEÇA
+  // ==========================================================
+  cerebro: { 
+    nome: "Região da Cabeça",
+    protocolos: [],
+    submenus: [
+      { label: "Neurologia (Cérebro)", target: "neurologia" },
+      { label: "Oftalmologia (Olhos)", target: "oftalmologia" },
+      { label: "Otorrino (Ouvido/Nariz)", target: "otorrino" },
+      { label: "Bucomaxilo (Face)", target: "bucomaxilo" }
+    ]
+  },
+  olhos: { nome: "Oftalmologia", protocolos: [], submenus: [{label: "Ver Exames de Vista", target: "oftalmologia"}] },
+  mandibula: { nome: "Face", protocolos: [], submenus: [{label: "Ver Bucomaxilo", target: "bucomaxilo"}] },
+  ouvidos: { nome: "Ouvidos", protocolos: [], submenus: [{label: "Ver Otorrino", target: "otorrino"}] },
+
+  neurologia: {
+    nome: "Neurologia / Neurocirurgia",
+    protocolos: [
+      { problema: "Cefaleia Crônica (Enxaqueca)", exame: "Consulta Neurologia", locais: ["Ambulatório de Especialidades"] },
+      { problema: "Suspeita de AVC Prévio", exame: "Tomografia de Crânio", locais: ["Hospital Regional", "Clínica de Imagem"] }
+    ]
+  },
+  oftalmologia: {
+    nome: "Oftalmologia",
+    protocolos: [
+      { problema: "Baixa Acuidade Visual", exame: "Consulta Oftalmo Geral", locais: ["Clínica de Olhos"] },
+      { problema: "Catarata (Idoso)", exame: "Avaliação Cirúrgica Catarata", locais: ["Mutirão da Saúde"] }
+    ]
+  },
+  otorrino: {
+    nome: "Otorrinolaringologia",
+    protocolos: [
+      { problema: "Hipoacusia (Surdez)", exame: "Audiometria Tonal e Vocal", locais: ["Centro Auditivo"] },
+      { problema: "Sinusite Crônica", exame: "Videolaringoscopia", locais: ["Clínica Otorrino"] }
+    ]
+  },
+  bucomaxilo: {
+    nome: "Cirurgia Bucomaxilofacial",
+    protocolos: [
+      { problema: "Disfunção de ATM (Estalos)", exame: "Consulta Bucomaxilo", locais: ["CEO - Centro Odontológico"] }
+    ]
+  },
+
+  // ==========================================================
+  // 2. REGIÃO DO PESCOÇO
+  // ==========================================================
+  pescoco: {
+    nome: "Pescoço",
+    protocolos: [],
+    submenus: [
+      { label: "Tireoide (Endócrino)", target: "tireoide" },
+      { label: "Linfonodos / Cistos", target: "partesMolesPescoco" }
+    ]
+  },
+  tireoide: {
+    nome: "Tireoide",
+    protocolos: [
+      { problema: "Bócio / Nódulo", exame: "USG Tireoide com Doppler", locais: ["Clínica de Imagem"] },
+      { problema: "Hipotireoidismo", exame: "Exames Laboratoriais (TSH/T4)", locais: ["Laboratório Municipal"] }
+    ]
+  },
+  partesMolesPescoco: {
+    nome: "Partes Moles (Pescoço)",
+    protocolos: [
+      { problema: "Cisto Tireoglosso / Íngua", exame: "USG Cervical", locais: ["Clínica de Imagem"] }
+    ]
+  },
+
+  // ==========================================================
+  // 3. TÓRAX (Coração, Pulmão, Mamas)
+  // ==========================================================
+  peito: {
+    nome: "Tórax / Peito",
+    protocolos: [],
+    submenus: [
+      { label: "Cardiologia (Coração)", target: "cardiologia" },
+      { label: "Pneumologia (Pulmão)", target: "pneumologia" },
+      { label: "Mastologia (Mamas)", target: "mastologia" },
+      { label: "Arcabouço Costal (Ossos)", target: "arcaboucoCostal" }
+    ]
+  },
+  cardiologia: {
+    nome: "Cardiologia",
+    protocolos: [
+      { problema: "Dor Torácica / Angina", exame: "Teste Ergométrico", locais: ["Clínica do Coração", "Hospital Regional"] },
+      { problema: "Arritmia / Palpitação", exame: "Holter 24h", locais: ["Clínica do Coração"] }
+    ]
+  },
+  pneumologia: {
+    nome: "Pneumologia",
+    protocolos: [
+      { problema: "Asma / DPOC", exame: "Espirometria", locais: ["Ambulatório Pneumo"] },
+      { problema: "Nódulo Pulmonar", exame: "Tomografia de Tórax", locais: ["Hospital Regional"] }
+    ]
+  },
+  mastologia: {
+    nome: "Mastologia / Mamas",
+    protocolos: [
+      { problema: "Rastreio (40+ anos)", exame: "Mamografia Bilateral", locais: ["Clínica da Mulher"] },
+      { problema: "Nódulo Palpável", exame: "USG Mamas", locais: ["Clínica da Mulher", "Hospital Regional"] }
+    ]
+  },
+  arcaboucoCostal: {
+    nome: "Parede Torácica",
+    protocolos: [
+      { problema: "Dor pós-trauma", exame: "Raio-X de Arcos Costais", locais: ["UPA", "Hospital Municipal"] }
+    ]
+  },
+
+  // ==========================================================
+  // 4. ABDÔMEN E PELVE
+  // ==========================================================
+  abdomen: { 
+    nome: "Abdômen", 
+    protocolos: [],
+    submenus: [
+      { label: "Estômago / Digestivo", target: "gastro" },
+      { label: "Fígado / Vesícula", target: "figado" },
+      { label: "Rins / Urinário", target: "rins" },
+      { label: "Parede Abdominal (Hérnia)", target: "paredeAbdominal" }
+    ]
+  },
+  gastro: {
+    nome: "Gastroenterologia",
+    protocolos: [{ problema: "Gastrite / Refluxo", exame: "Endoscopia Digestiva Alta", locais: ["Hospital Municipal"] }]
+  },
+  figado: {
+    nome: "Fígado e Vesícula",
+    protocolos: [{ problema: "Pedra na Vesícula (Colelítiase)", exame: "USG Abdome Superior", locais: ["Clínica de Imagem"] }]
+  },
+  rins: {
+    nome: "Nefro / Urologia",
+    protocolos: [{ problema: "Cálculo Renal (Pedra)", exame: "Tomografia de Vias Urinárias", locais: ["Regional"] }]
+  },
+  paredeAbdominal: {
+    nome: "Cirurgia Geral",
+    protocolos: [{ problema: "Hérnia Umbilical / Inguinal", exame: "Consulta Cirurgião Geral", locais: ["Ambulatório Cirúrgico"] }]
+  },
+
+  pelvis: { 
+    nome: "Pelve / Bacia", 
+    protocolos: [],
+    submenus: [
+      { label: "Ginecologia (Mulher)", target: "ginecologia" },
+      { label: "Urologia (Homem)", target: "urologia" },
+      { label: "Quadril (Ortopedia)", target: "quadril" }
+    ]
+  },
+  ginecologia: {
+    nome: "Ginecologia",
+    protocolos: [{ problema: "Sangramento Uterino", exame: "USG Transvaginal", locais: ["Clínica da Mulher"] }]
+  },
+  urologia: {
+    nome: "Urologia (Próstata)",
+    protocolos: [{ problema: "HPB / Próstata Aumentada", exame: "USG Próstata + PSA", locais: ["Laboratório", "Imagem"] }]
+  },
+  quadril: {
+    nome: "Ortopedia (Quadril)",
+    protocolos: [{ problema: "Artrose de Quadril", exame: "Raio-X de Bacia", locais: ["UPA"] }]
+  },
+
+  // ==========================================================
+  // 5. COLUNA (Visão Costas)
+  // ==========================================================
+  nuca: { nome: "Coluna Cervical", protocolos: [], submenus: [{label: "Ver Cervical", target: "colunaCervical"}]},
+  
+  colunaCervical: { 
+    nome: "Coluna Cervical (Pescoço)", 
+    protocolos: [{ problema: "Cervicalgia", exame: "Raio-X Coluna Cervical", locais: ["UPA"] }]
+  },
+  colunaToracica: { 
+    nome: "Coluna Torácica (Dorso)", 
+    protocolos: [{ problema: "Dor Dorsal", exame: "Raio-X Coluna Torácica", locais: ["UPA"] }]
+  },
+  colunaLombar: { 
+    nome: "Coluna Lombar", 
+    protocolos: [],
+    submenus: [
+      { label: "Dor Lombar Comum", target: "lombalgia" },
+      { label: "Hérnia / Nervo Ciático", target: "herniaDisco" }
+    ]
+  },
+  lombalgia: {
+    nome: "Lombalgia Mecânica",
+    protocolos: [{ problema: "Dor Lombar", exame: "Raio-X Coluna Lombar", locais: ["UPA", "Hospital"] }]
+  },
+  herniaDisco: {
+    nome: "Doenças do Disco",
+    protocolos: [{ problema: "Hérnia de Disco / Radiculopatia", exame: "Ressonância Magnética", locais: ["Clínica de Imagem"] }]
+  },
+
+  // ==========================================================
+  // 6. MEMBROS SUPERIORES E INFERIORES
+  // ==========================================================
+  
+  // -- AQUI ESTAVA O ERRO (Corrigido para 'protocolos') --
+  ombroDireito: { nome: "Ombro Direito", protocolos: [], submenus: [{label: "Ortopedia Ombro", target: "ortopediaOmbro"}] },
+  ombroEsquerdo: { nome: "Ombro Esquerdo", protocolos: [], submenus: [{label: "Ortopedia Ombro", target: "ortopediaOmbro"}] },
+  ortopediaOmbro: {
+    nome: "Ombro",
+    protocolos: [{ problema: "Bursite / Tendinite", exame: "USG de Ombro", locais: ["Clínica de Imagem"] }]
+  },
+  
+  bracoDireito: { nome: "Braço Direito", protocolos: [] }, // Corrigido
+  bracoEsquerdo: { nome: "Braço Esquerdo", protocolos: [] }, // Corrigido
+  
+  maoDireita: {
+    nome: "Mão e Punho",
+    protocolos: [],
+    submenus: [
+      { label: "Punho (Articulação)", target: "punho" },
+      { label: "Dedos / Mão", target: "dedos" }
+    ]
+  },
+  maoEsquerda: { nome: "Mão Esquerda", protocolos: [], submenus: [{ label: "Ver Opções Mão", target: "maoDireita"}] }, 
+  
+  punho: {
+    nome: "Punho",
+    protocolos: [{ problema: "Cisto Sinovial", exame: "USG Articular", locais: ["Regional"] }]
+  },
+  dedos: {
+    nome: "Mão e Dedos",
+    protocolos: [{ problema: "Fratura / Trauma", exame: "Raio-X de Mão", locais: ["UPA"] }]
+  },
+
+  // -- INFERIORES --
+  pernaDireita: { 
+    nome: "Membro Inferior Direito", 
+    protocolos: [],
+    submenus: [
+      { label: "Joelho", target: "joelho" },
+      { label: "Vascular (Varizes)", target: "vascular" },
+      { label: "Tornozelo e Pé", target: "pe" }
+    ]
+  },
+  pernaEsquerda: { nome: "Membro Inferior Esquerdo", protocolos: [], submenus: [{ label: "Ver Opções Perna", target: "pernaDireita"}] },
+
+  joelho: {
+    nome: "Joelho",
+    protocolos: [
+      { problema: "Artrose de Joelho", exame: "Raio-X de Joelho Carga", locais: ["UPA"] },
+      { problema: "Lesão de Menisco/Ligamento", exame: "Ressonância Magnética", locais: ["Clínica de Imagem"] }
+    ]
+  },
+  vascular: {
+    nome: "Cirurgia Vascular",
+    protocolos: [
+      { problema: "Varizes / Insuf. Venosa", exame: "Doppler Colorido Venoso", locais: ["Hospital Regional", "Clínica Vascular"] }
+    ]
+  },
+  pe: {
+    nome: "Tornozelo e Pé",
+    protocolos: [
+      { problema: "Entorse / Trauma", exame: "Raio-X Tornozelo/Pé", locais: ["UPA"] },
+      { problema: "Esporão de Calcâneo", exame: "Raio-X Calcâneo", locais: ["UPA"] }
+    ]
+  },
+  
+  // Itens extras das costas
+  gluteos: { nome: "Glúteos", protocolos: [] },
+  posteriorCoxaDireita: { nome: "Posterior de Coxa", protocolos: [] },
+  panturrilhaDireita: { nome: "Panturrilha", protocolos: [] }
+};
+</file>
+
+<file path="sitema-regulacao/src/database_schema.sql">
+-- ###########################################################
+-- SCHEMA DE BANCO DE DADOS - SISREG PRO
+-- Data de Criação: 01/02/2026
+-- ###########################################################
+
+-- 1. TABELAS PRINCIPAIS
+CREATE TABLE IF NOT EXISTS public.body_parts (
+    id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.sub_areas (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    body_part_id TEXT REFERENCES public.body_parts(id),
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.protocols (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    body_part_id TEXT REFERENCES public.body_parts(id),
+    sub_area_id UUID REFERENCES public.sub_areas(id),
+    problema TEXT NOT NULL,
+    locais TEXT,
+    exame TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+    email TEXT,
+    role TEXT DEFAULT 'user'
+);
+
+-- 2. TABELA DE AUDITORIA (LOGS)
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    tabela_nome TEXT,
+    item_id TEXT,
+    operacao TEXT,
+    usuario_email TEXT,
+    dados_antigos JSONB,
+    dados_novos JSONB,
+    data_hora TIMESTAMPTZ DEFAULT now()
+);
+
+-- 3. SEGURANÇA (RLS)
+ALTER TABLE public.body_parts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sub_areas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.protocols ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Exemplo de Políticas (Repetir para as outras conforme necessário)
+CREATE POLICY "Leitura pública" ON public.protocols FOR SELECT USING (true);
+CREATE POLICY "Admin total" ON public.protocols FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- 4. FUNÇÕES E TRIGGERS (A LÓGICA DO BANCO)
+CREATE OR REPLACE FUNCTION public.registrar_auditoria()
+RETURNS TRIGGER AS $$
+DECLARE v_user_email TEXT;
+BEGIN
+    v_user_email := (SELECT email FROM auth.users WHERE id = auth.uid());
+    IF (TG_OP = 'DELETE') THEN
+        INSERT INTO public.audit_logs (tabela_nome, item_id, operacao, usuario_email, dados_antigos)
+        VALUES (TG_TABLE_NAME, OLD.id::text, TG_OP, v_user_email, to_jsonb(OLD));
+        RETURN OLD;
+    ELSIF (TG_OP = 'UPDATE') THEN
+        INSERT INTO public.audit_logs (tabela_nome, item_id, operacao, usuario_email, dados_antigos, dados_novos)
+        VALUES (TG_TABLE_NAME, NEW.id::text, TG_OP, v_user_email, to_jsonb(OLD), to_jsonb(NEW));
+        RETURN NEW;
+    ELSE -- INSERT
+        INSERT INTO public.audit_logs (tabela_nome, item_id, operacao, usuario_email, dados_novos)
+        VALUES (TG_TABLE_NAME, NEW.id::text, TG_OP, v_user_email, to_jsonb(NEW));
+        RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE TRIGGER tr_auditoria_protocolos 
+AFTER INSERT OR UPDATE OR DELETE ON public.protocols
+FOR EACH ROW EXECUTE PROCEDURE registrar_auditoria();
+</file>
+
+<file path="sitema-regulacao/src/Layout.jsx">
+import React from 'react';
+
+const Layout = ({ children }) => {
+  return (
+    <div style={styles.containerPrincipal}>
+      {/* --- CABEÇALHO (NAVBAR) --- */}
+      <header style={styles.cabecalho}>
+        <div style={styles.logoArea}>
+          <span style={styles.iconeMedico}>✚</span>
+          <h1 style={styles.tituloSistema}>SisReg Saúde</h1>
+        </div>
+        <div style={styles.usuario}>
+          <span>Olá, Regulador</span>
+          <div style={styles.avatar}>R</div>
+        </div>
+      </header>
+
+      {/* --- CONTEÚDO (AQUI ENTRA O BONECO E O PAINEL) --- */}
+      <main style={styles.conteudo}>
+        <div style={styles.cardBranco}>
+          {children} 
+        </div>
+      </main>
+
+      {/* --- RODAPÉ --- */}
+      <footer style={styles.rodape}>
+        <p>Sistema de Apoio à Regulação - Versão 1.0 Alpha</p>
+      </footer>
+    </div>
+  );
+};
+
+// Estilos CSS dentro do JavaScript (CSS-in-JS)
+const styles = {
+  containerPrincipal: {
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    backgroundColor: '#f0f2f5', // Fundo cinza claro padrão de sistemas
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  cabecalho: {
+    backgroundColor: '#0277bd', // Azul "Hospital"
+    color: 'white',
+    padding: '0 20px',
+    height: '60px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  logoArea: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  },
+  iconeMedico: {
+    fontSize: '24px',
+    fontWeight: 'bold'
+  },
+  tituloSistema: {
+    fontSize: '18px',
+    margin: 0,
+    fontWeight: 500
+  },
+  usuario: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '14px'
+  },
+  avatar: {
+    width: '32px',
+    height: '32px',
+    backgroundColor: 'white',
+    color: '#0277bd',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold'
+  },
+  conteudo: {
+    flex: 1, // Ocupa todo o espaço sobrando
+    padding: '20px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  cardBranco: {
+    backgroundColor: 'white',
+    width: '100%',
+    maxWidth: '1200px', // Limita a largura para não ficar esticado em monitores gigantes
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    overflow: 'hidden', // Garante que nada saia do card
+    display: 'flex', // Para o layout interno funcionar
+    flexDirection: 'row' // Garante lado a lado
+  },
+  rodape: {
+    textAlign: 'center',
+    padding: '10px',
+    fontSize: '12px',
+    color: '#666',
+    borderTop: '1px solid #ddd'
+  }
+};
+
+export default Layout;
+</file>
+
+<file path="sitema-regulacao/src/main.jsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+</file>
+
+<file path="sitema-regulacao/src/supabaseClient.js">
+// src/supabaseClient.js
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://czcksdlxuovenbhyabne.supabase.co'
+const supabaseAnonKey = 'sb_publishable_GG0_i90KCnsUKgH4E-PLKQ_RdqD_sLn'
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+</file>
+
+<file path="sitema-regulacao/src/Toast.jsx">
+import React, { useEffect } from 'react';
+
+export default function Toast({ mensagem, tipo, onClose }) {
+  // tipo pode ser 'sucesso' (verde) ou 'erro' (vermelho)
+  
+  // Fecha sozinho depois de 3 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      backgroundColor: tipo === 'erro' ? '#ff5252' : '#00e676', // Vermelho ou Verde Neon
+      color: '#fff',
+      padding: '15px 20px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      zIndex: 10000,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      animation: 'slideIn 0.3s ease-out',
+      fontWeight: 'bold',
+      fontSize: '14px'
+    }}>
+      <span>{tipo === 'erro' ? '❌' : '✅'}</span>
+      {mensagem}
+    </div>
+  );
+}
+</file>
+
+<file path="sitema-regulacao/.gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="sitema-regulacao/eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [
+      js.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+])
+</file>
+
+<file path="sitema-regulacao/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sitema-regulacao</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="sitema-regulacao/vercel.json">
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+</file>
+
+<file path="sitema-regulacao/vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
+<file path="package.json">
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.93.2"
+  }
+}
+</file>
+
+<file path="sitema-regulacao/src/HeaderSecao.jsx">
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient'; 
+
+const HeaderSecao = ({ 
+  parteSelecionada, 
+  nomeAtual,        // <--- Novo: Recebe o nome bonito do banco
+  isAdmin, 
+  modoEdicao, 
+  aoAbrirModalProtocolo, 
+  aoAtualizar,
+  onRename          // <--- Novo: Função para salvar a renomeação
+}) => {
+  
+  // --- Lógica de Renomear Título ---
+  const [editando, setEditando] = useState(false);
+  const [novoNome, setNovoNome] = useState('');
+
+  // Sincroniza quando muda a parte selecionada
+  useEffect(() => {
+    setNovoNome(nomeAtual || '');
+  }, [nomeAtual]);
+
+  const handleSalvarNome = async () => {
+    if (novoNome.trim() !== '' && novoNome !== nomeAtual) {
+      await onRename(novoNome);
+    }
+    setEditando(false);
+  };
+
+  const handleCancelarEdicao = () => {
+    setNovoNome(nomeAtual || '');
+    setEditando(false);
+  };
+
+  // --- Lógica Original de Criar Submenu ---
+  const handleCriarSubmenu = async () => {
+    if (!parteSelecionada) return;
+
+    const nome = prompt(`Nome da nova Categoria para ${nomeAtual || parteSelecionada}:`);
+    if (!nome) return;
+
+    const { error } = await supabase
+      .from('sub_areas')
+      .insert([{ body_part_id: parteSelecionada, name: nome }]);
+
+    if (error) {
+      console.error(error);
+      if (error.code === '23503') {
+        alert(`ERRO CRÍTICO: O ID "${parteSelecionada}" não existe na tabela 'body_parts'.`);
+      } else {
+        alert(`Erro ao criar: ${error.message}`);
+      }
+    } else {
+      if (aoAtualizar) aoAtualizar();
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+      
+      {/* TÍTULO EDITÁVEL */}
+      <div style={{ flex: 1 }}>
+        {editando ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <input 
+              autoFocus
+              type="text" 
+              value={novoNome} 
+              onChange={(e) => setNovoNome(e.target.value)}
+              style={{ 
+                fontSize: '24px', fontWeight: 'bold', color: 'var(--destaque)', 
+                background: 'transparent', border: 'none', borderBottom: '2px solid var(--destaque)',
+                outline: 'none', width: '100%', maxWidth: '300px'
+              }}
+            />
+            <button onClick={handleSalvarNome} style={{ cursor: 'pointer', background: '#00e676', border: 'none', borderRadius: '4px', color: '#fff', padding: '5px 10px', fontWeight: 'bold' }}>✓</button>
+            <button onClick={handleCancelarEdicao} style={{ cursor: 'pointer', background: '#ff5252', border: 'none', borderRadius: '4px', color: '#fff', padding: '5px 10px', fontWeight: 'bold' }}>✕</button>
+          </div>
+        ) : (
+          <h2 style={{ color: 'var(--destaque)', margin: 0, textTransform: 'capitalize', fontSize: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {nomeAtual || (parteSelecionada ? parteSelecionada.replace(/-/g, ' ') : 'Selecione...')}
+            
+            {/* Lápis de Edição */}
+            {modoEdicao && isAdmin && parteSelecionada && (
+              <button 
+                onClick={() => setEditando(true)}
+                title="Renomear Parte"
+                style={{ 
+                  background: 'transparent', border: '1px solid var(--destaque)', borderRadius: '50%', 
+                  width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'var(--destaque)', fontSize: '12px'
+                }}
+              >
+                ✎
+              </button>
+            )}
+          </h2>
+        )}
+      </div>
+
+      {/* BOTÕES DE AÇÃO (Só Admins) */}
+      {modoEdicao && isAdmin && (
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Botão AZUL - Submenu */}
+          <button 
+            onClick={handleCriarSubmenu} 
+            style={{ 
+              background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 16px', 
+              borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+              display: 'flex', alignItems: 'center', gap: '5px'
+            }}
+          >
+            <span>+</span> Criar Submenu
+          </button>
+
+          {/* Botão VERDE - Protocolo */}
+          <button 
+            onClick={aoAbrirModalProtocolo} 
+            style={{ 
+              background: 'var(--destaque)', color: '#fff', border: 'none', padding: '8px 16px', 
+              borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.2)' 
+            }}
+          >
+            + Novo Protocolo
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default HeaderSecao;
+</file>
+
+<file path="sitema-regulacao/src/Login.jsx">
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
+
+export default function Login({ aoFechar }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState(null);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErro(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErro(error.message === 'Invalid login credentials' 
+        ? 'E-mail ou senha incorretos.' 
+        : 'Erro ao entrar: ' + error.message);
+      setLoading(false);
+    } else {
+      // O App.jsx vai detectar a mudança de sessão automaticamente
+      aoFechar(); 
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px',
+        width: '90%', maxWidth: '350px', position: 'relative',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        border: '1px solid var(--borda)'
+      }}>
+        {/* Botão Fechar */}
+        <button 
+          onClick={aoFechar}
+          style={{
+            position: 'absolute', top: '10px', right: '10px',
+            background: 'transparent', border: 'none',
+            color: 'var(--texto-secundario)', cursor: 'pointer', fontSize: '16px'
+          }}
+        >
+          ✕
+        </button>
+
+        <h2 style={{ color: 'var(--destaque)', textAlign: 'center', marginTop: 0 }}>Acessar Sistema</h2>
+        
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>E-mail</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Senha</label>
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }}
+            />
+          </div>
+
+          {erro && <div style={{ color: '#ff5252', fontSize: '13px', textAlign: 'center', padding: '5px', backgroundColor: 'rgba(255, 82, 82, 0.1)', borderRadius: '4px' }}>{erro}</div>}
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              padding: '12px', marginTop: '10px',
+              backgroundColor: 'var(--destaque)', color: '#fff',
+              border: 'none', borderRadius: '8px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold', fontSize: '15px',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '20px', fontSize: '12px', textAlign: 'center', color: 'var(--texto-secundario)', borderTop: '1px solid var(--borda)', paddingTop: '15px' }}>
+          <p style={{ margin: 0 }}>Não tem acesso?</p>
+          <p style={{ margin: '5px 0 0 0' }}>Fale com o administrador para solicitar seu cadastro.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="sitema-regulacao/src/ModalForm.jsx">
+import React, { useState, useEffect } from 'react';
+
+export default function ModalForm({ isOpen, onClose, onSave, itemEdicao }) {
+  // Estados do formulário
+  const [problema, setProblema] = useState('');
+  const [locais, setLocais] = useState('');
+  const [informacoes, setInformacoes] = useState(''); // Novo campo
+  const [exame, setExame] = useState('');
+
+  // Quando o modal abre, preenche os dados se for edição
+  useEffect(() => {
+    if (isOpen) {
+      if (itemEdicao) {
+        setProblema(itemEdicao.problema || '');
+        setLocais(itemEdicao.locais || '');
+        setInformacoes(itemEdicao.informacoes || ''); // Carrega info existente
+        setExame(itemEdicao.exame || '');
+      } else {
+        // Limpa se for criar novo
+        setProblema('');
+        setLocais('');
+        setInformacoes('');
+        setExame('');
+      }
+    }
+  }, [isOpen, itemEdicao]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Envia o objeto completo de volta para o App.jsx
+    onSave({ 
+      problema, 
+      locais, 
+      informacoes, // Envia a nova info
+      exame 
+    });
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-card)', padding: '25px', borderRadius: '12px',
+        width: '90%', maxWidth: '500px', position: 'relative',
+        border: '1px solid var(--borda)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+      }}>
+        <h2 style={{ marginTop: 0, color: 'var(--destaque)' }}>
+          {itemEdicao ? 'Editar Protocolo' : 'Novo Protocolo'}
+        </h2>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          
+          {/* PROBLEMA */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Problema / Doença</label>
+            <input 
+              type="text" 
+              required
+              value={problema} 
+              onChange={(e) => setProblema(e.target.value)} 
+              placeholder="Ex: Fratura exposta"
+              style={inputStyle} 
+            />
+          </div>
+
+          {/* LOCAIS DE ATENDIMENTO */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Locais de Atendimento (separe por /)</label>
+            <input 
+              type="text" 
+              required
+              value={locais} 
+              onChange={(e) => setLocais(e.target.value)} 
+              placeholder="Ex: UPA / Hospital Municipal"
+              style={inputStyle} 
+            />
+          </div>
+
+          {/* NOVO CAMPO: INFORMAÇÕES */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>ℹ️ Informações Adicionais</label>
+            <textarea 
+              rows="3"
+              value={informacoes} 
+              onChange={(e) => setInformacoes(e.target.value)} 
+              placeholder="Ex: Paciente precisa estar em jejum; Levar documento original..."
+              style={{ ...inputStyle, resize: 'vertical' }} 
+            />
+          </div>
+
+          {/* EXAME / PROCEDIMENTO */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Exame ou Procedimento</label>
+            <input 
+              type="text" 
+              value={exame} 
+              onChange={(e) => setExame(e.target.value)} 
+              placeholder="Ex: Raio-X de Tórax"
+              style={inputStyle} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'transparent', color: 'var(--texto-primario)', cursor: 'pointer' }}>Cancelar</button>
+            <button type="submit" style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--destaque)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: '100%', 
+  padding: '10px', 
+  borderRadius: '6px', 
+  border: '1px solid var(--borda)', 
+  background: 'var(--input-bg)', 
+  color: 'var(--texto-primario)', 
+  outline: 'none',
+  fontFamily: 'inherit'
+};
+</file>
+
+<file path="sitema-regulacao/package.json">
+{
+  "name": "sistema-regulacao",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "vite": "^5.0.8"
+  }
+}
+</file>
+
+<file path="sitema-regulacao/README.md">
+# 🏥 SISREG PRO - Sistema de Regulação de Protocolos Médicos
+
+> Sistema web interativo para consulta e gestão de protocolos médicos e de regulação, com foco em usabilidade, performance e segurança de dados.
+
+![Status](https://img.shields.io/badge/STATUS-EM_DESENVOLVIMENTO-green)
+![Tech](https://img.shields.io/badge/STACK-REACT_%7C_SUPABASE-blue)
+
+## 🎯 Sobre o Projeto
+
+O **SISREG PRO** foi desenvolvido para otimizar o processo de consulta de diretrizes médicas. Diferente de PDFs estáticos ou planilhas extensas, o sistema oferece uma interface visual baseada na anatomia humana, permitindo que o regulador encontre a informação necessária com poucos cliques.
+
+O projeto implementa uma arquitetura **Full Stack Serverless**, utilizando React no Frontend e Supabase (PostgreSQL) no Backend, com forte ênfase em Segurança a Nível de Banco de Dados (RLS).
+
+## 🚀 Funcionalidades Principais
+
+### 🧠 Navegação Intuitiva
+- **Mapa Corporal Interativo (SVG):** Seleção de protocolos clicando diretamente nas partes do corpo (Frente/Costas).
+- **Busca Global Indexada:** Pesquisa rápida por problema, tipo de exame ou códigos.
+- **Dark Mode:** Interface adaptável para conforto visual.
+
+### 🛡️ Segurança e Controle de Acesso (RBAC)
+O sistema possui uma hierarquia de permissões rigorosa implementada no Backend:
+
+1.  **👑 Super Admin:**
+    - Acesso total ao sistema.
+    - **Gestão de Equipe:** Poder exclusivo para promover ou rebaixar usuários.
+    - Visualização de logs de auditoria (em roadmap).
+2.  **🔒 Admin:**
+    - Pode Criar, Editar e Excluir protocolos e subáreas.
+    - Não tem acesso à gestão de usuários.
+3.  **👤 User:**
+    - Acesso apenas para leitura e consulta.
+4.  **Visitante:**
+    - Bloqueio total. O sistema exige autenticação para exibir qualquer dado.
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend:** React.js (Vite), CSS Modules (Responsivo).
+- **Backend / Database:** Supabase (PostgreSQL).
+- **Autenticação:** Supabase Auth (Email/Password).
+- **Segurança:** PostgreSQL Row Level Security (RLS).
+- **Deploy:** Vercel.
+
+## 🔒 Arquitetura de Segurança (Destaque Técnico)
+
+Este projeto não depende apenas do Frontend para segurança. As regras são aplicadas diretamente no banco de dados via **RLS (Row Level Security)**.
+
+- **Proteção contra ataques via F12:** Mesmo que um usuário mal-intencionado manipule o estado do React para habilitar botões de "Excluir", o banco de dados rejeitará a requisição se o token de sessão não tiver a `role` correta.
+- **Prevenção de Loops Infinitos:** Utilização de funções `SECURITY DEFINER` para checagem de cargos sem causar recursividade nas políticas de acesso.
+- **Triggers Automáticos:** Gatilhos SQL (`plpgsql`) que criam automaticamente o perfil do usuário e definem permissões padrão ao registrar uma nova conta.
+
+## 📂 Estrutura do Banco de Dados
+
+O esquema do banco de dados inclui:
+- `protocols`: Tabela principal com regras de negócio.
+- `body_parts` & `sub_areas`: Tabelas relacionais para categorização.
+- `profiles`: Extensão da tabela de usuários para gestão de cargos (roles).
+- `audit_logs`: Registro de alterações para compliance.
+
+*O esquema completo pode ser encontrado no arquivo `database_schema.sql` na raiz do projeto.*
+
+## 💻 Como Rodar Localmente
+
+1. Clone o repositório:
+```bash
+git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
+</file>
+
+<file path="sitema-regulacao/src/ViewerCorpo.jsx">
+import React from 'react';
+
+const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
+
+  // --- CORES & ESTILO ---
+  const colors = {
+    fill: '#f1f5f9',          // Slate-100 (Fundo suave)
+    stroke: '#94a3b8',        // Slate-400 (Contorno neutro)
+    fillSelected: '#3b82f6',  // Blue-500 (Selecionado)
+    strokeSelected: '#1d4ed8',// Blue-700 (Borda forte)
+    hover: '#cbd5e1'          // Slate-300 (Hover)
+  };
+
+  // Função que decide a cor baseada no ID selecionado
+  const getStyle = (targetId) => {
+    // Verifica se a parte ativa bate com o ID deste elemento
+    const isSelected = parteAtiva === targetId;
+    
+    return {
+      fill: isSelected ? colors.fillSelected : colors.fill,
+      stroke: isSelected ? colors.strokeSelected : colors.stroke,
+      strokeWidth: '2',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      vectorEffect: 'non-scaling-stroke', // Mantém a borda bonita no zoom
+    };
+  };
+
+  // Componente auxiliar para desenhar uma parte do corpo
+  // sqlId = O ID exato que está no seu banco de dados
+  const BodyPart = ({ sqlId, d }) => (
+    <path
+      d={d}
+      style={getStyle(sqlId)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (aoSelecionar) aoSelecionar(sqlId);
+      }}
+      onMouseEnter={(e) => {
+        if (parteAtiva !== sqlId) e.target.style.fill = colors.hover;
+      }}
+      onMouseLeave={(e) => {
+        if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
+        else e.target.style.fill = colors.fillSelected;
+      }}
+    />
+  );
+
+  return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <svg 
+        viewBox="0 0 300 700" 
+        style={{ height: '550px', width: 'auto', maxWidth: '100%' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {vista === 'frente' ? (
+          <g transform="translate(0, 20)">
+            {/* --- FRENTE --- */}
+
+            {/* Cabeça & Pescoço */}
+            <BodyPart sqlId="cabeca" d="M150,20 C130,20 125,45 125,75 C125,105 135,120 150,120 C165,120 175,105 175,75 C175,45 170,20 150,20 Z" />
+            <BodyPart sqlId="pescoco" d="M135,115 L165,115 L165,135 Q150,140 135,135 Z" />
+
+            {/* Tronco (Dividido conforme SQL) */}
+            <BodyPart sqlId="peito" d="M125,140 Q150,145 175,140 L180,200 Q150,210 120,200 Z" />
+            <BodyPart sqlId="abdomen" d="M120,205 Q150,215 180,205 L175,260 Q150,270 125,260 Z" />
+            <BodyPart sqlId="pelvis" d="M125,265 Q150,275 175,265 L185,300 L115,300 L125,265 Z" />
+
+            {/* Braços (Agrupados: clique no antebraço ou bíceps manda o mesmo ID) */}
+            {/* Esquerdo */}
+            <BodyPart sqlId="ombro-esquerdo" d="M180,140 L210,150 L200,180 L178,170 Z" />
+            <BodyPart sqlId="braco-esquerdo" d="M212,155 L220,200 L200,205 L195,160 Z" /> {/* Bíceps */}
+            <BodyPart sqlId="braco-esquerdo" d="M220,205 L225,260 L205,265 L200,210 Z" /> {/* Antebraço */}
+            <BodyPart sqlId="mao-esquerda" d="M225,265 L235,300 L210,305 L205,270 Z" />
+
+            {/* Direito */}
+            <BodyPart sqlId="ombro-direito" d="M120,140 L90,150 L100,180 L122,170 Z" />
+            <BodyPart sqlId="braco-direito" d="M88,155 L80,200 L100,205 L105,160 Z" /> {/* Bíceps */}
+            <BodyPart sqlId="braco-direito" d="M80,205 L75,260 L95,265 L100,210 Z" /> {/* Antebraço */}
+            <BodyPart sqlId="mao-direita" d="M75,265 L65,300 L90,305 L95,270 Z" />
+
+            {/* Pernas (Agrupados: Coxa e Canela enviam o mesmo ID) */}
+            {/* Esquerda */}
+            <BodyPart sqlId="perna-esquerda" d="M155,305 L180,305 L175,400 L150,400 Z" /> {/* Coxa */}
+            <BodyPart sqlId="perna-esquerda" d="M152,405 L173,405 L170,500 L155,500 Z" /> {/* Canela */}
+            <BodyPart sqlId="pe-esquerdo" d="M155,505 L170,505 L180,530 L150,530 Z" />
+
+            {/* Direita */}
+            <BodyPart sqlId="perna-direita" d="M145,305 L120,305 L125,400 L150,400 Z" /> {/* Coxa */}
+            <BodyPart sqlId="perna-direita" d="M148,405 L127,405 L130,500 L145,500 Z" /> {/* Canela */}
+            <BodyPart sqlId="pe-direito" d="M145,505 L130,505 L120,530 L150,530 Z" />
+          </g>
+        ) : (
+          <g transform="translate(0, 20)">
+            {/* --- COSTAS --- */}
+            
+            {/* Cabeça Costas */}
+            <BodyPart sqlId="cabeca" d="M150,20 C130,20 125,45 125,75 C125,105 135,120 150,120 C165,120 175,105 175,75 C175,45 170,20 150,20 Z" />
+            <BodyPart sqlId="pescoco" d="M135,115 L165,115 L165,135 Q150,140 135,135 Z" />
+
+            {/* Coluna Vertebral (Dividida conforme SQL) */}
+            <BodyPart sqlId="coluna-cervical" d="M140,135 L160,135 L160,165 L140,165 Z" />
+            <BodyPart sqlId="coluna-toracica" d="M140,168 L160,168 L160,230 L140,230 Z" />
+            <BodyPart sqlId="coluna-lombar" d="M140,233 L160,233 L160,270 L140,270 Z" />
+
+            {/* Área das costas (fundo) - Não clicável ou parte do ombro */}
+            {/* Decidi mapear as laterais das costas para 'Ombro' ou deixar visual. 
+                Pelo seu SQL, não tem "Costas Superior". Vou expandir os ombros para preencher as costas. */}
+            
+            <BodyPart sqlId="ombro-esquerdo" d="M162,135 L210,150 L200,230 L162,230 Z" />
+            <BodyPart sqlId="ombro-direito" d="M138,135 L90,150 L100,230 L138,230 Z" />
+
+            {/* Glúteos */}
+            <BodyPart sqlId="gluteos" d="M120,275 L180,275 L185,320 L115,320 Z" />
+
+            {/* Membros Costas (Mesma lógica da frente) */}
+            {/* Braço Esquerdo Costas */}
+            <BodyPart sqlId="braco-esquerdo" d="M212,155 L220,200 L200,205 L195,160 Z" />
+            <BodyPart sqlId="braco-esquerdo" d="M220,205 L225,260 L205,265 L200,210 Z" />
+            <BodyPart sqlId="mao-esquerda" d="M225,265 L235,300 L210,305 L205,270 Z" />
+
+            {/* Braço Direito Costas */}
+            <BodyPart sqlId="braco-direito" d="M88,155 L80,200 L100,205 L105,160 Z" />
+            <BodyPart sqlId="braco-direito" d="M80,205 L75,260 L95,265 L100,210 Z" />
+            <BodyPart sqlId="mao-direita" d="M75,265 L65,300 L90,305 L95,270 Z" />
+
+            {/* Perna Esquerda Costas */}
+            <BodyPart sqlId="perna-esquerda" d="M155,325 L180,325 L175,400 L150,400 Z" />
+            <BodyPart sqlId="perna-esquerda" d="M152,405 L173,405 L170,500 L155,500 Z" />
+            <BodyPart sqlId="pe-esquerdo" d="M155,505 L170,505 L180,530 L150,530 Z" />
+
+            {/* Perna Direita Costas */}
+            <BodyPart sqlId="perna-direita" d="M145,325 L120,325 L125,400 L150,400 Z" />
+            <BodyPart sqlId="perna-direita" d="M148,405 L127,405 L130,500 L145,500 Z" />
+            <BodyPart sqlId="pe-direito" d="M145,505 L130,505 L120,530 L150,530 Z" />
+
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+};
+
+export default CorpoHumano;
+</file>
+
+<file path="sitema-regulacao/src/CorpoHumano.jsx">
+import React from 'react';
+
+// Adicionamos 'mapaDeNomes' (o cérebro) nas props
+const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
+
+  // --- CORES & ESTILO (Tema Modular Clean) ---
+  const colors = {
+    fill: '#f8fafc',          // Fundo quase branco
+    stroke: '#64748b',        // Borda cinza
+    fillSelected: '#3b82f6',  // Azul seleção
+    strokeSelected: '#1d4ed8',// Azul borda forte
+    hover: '#e2e8f0'          // Hover suave
+  };
+
+  const getStyle = (targetId) => {
+    const isSelected = parteAtiva === targetId;
+    return {
+      fill: isSelected ? colors.fillSelected : colors.fill,
+      stroke: isSelected ? colors.strokeSelected : colors.stroke,
+      strokeWidth: isSelected ? '2.5' : '2',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      vectorEffect: 'non-scaling-stroke',
+    };
+  };
+
+  // --- A MÁGICA DA TRADUÇÃO ---
+  // Quando clica, ele olha no mapa se esse ID tem um nome especial no banco
+  const resolverAcao = (e, sqlIdOriginal) => {
+    e.stopPropagation();
+    
+    // Tenta achar o objeto no dicionário (ex: { label: 'Coxa', id: 'coxa-dir' })
+    // Se não achar, usa o ID original mesmo.
+    const valorFinal = mapaDeNomes[sqlIdOriginal] ? mapaDeNomes[sqlIdOriginal] : sqlIdOriginal;
+    
+    if (aoSelecionar) aoSelecionar(valorFinal);
+  };
+
+  // Função auxiliar para pegar o nome legível (para o tooltip do mouse)
+  const getNomeLegivel = (id) => {
+    return mapaDeNomes[id]?.label || id;
+  };
+
+  // Componente Genérico para RETÂNGULOS (Tronco, membros)
+  const Block = ({ sqlId, x, y, w, h, radius = 6 }) => (
+    <rect
+      x={x} y={y} width={w} height={h} rx={radius} ry={radius}
+      style={getStyle(sqlId)}
+      onClick={(e) => resolverAcao(e, sqlId)}
+      onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
+      onMouseLeave={(e) => {
+        if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
+        else e.target.style.fill = colors.fillSelected;
+      }}
+    >
+      {/* Mostra o nome real do banco quando para o mouse em cima */}
+      <title>{getNomeLegivel(sqlId)}</title>
+    </rect>
+  );
+
+  // Componente Genérico para CÍRCULOS (Cabeça, Mãos)
+  const Round = ({ sqlId, cx, cy, r }) => (
+    <circle
+      cx={cx} cy={cy} r={r}
+      style={getStyle(sqlId)}
+      onClick={(e) => resolverAcao(e, sqlId)}
+      onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
+      onMouseLeave={(e) => {
+        if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
+        else e.target.style.fill = colors.fillSelected;
+      }}
+    >
+      <title>{getNomeLegivel(sqlId)}</title>
+    </circle>
+  );
+
+  return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <svg 
+        viewBox="0 0 300 650" 
+        style={{ height: '550px', width: 'auto', maxWidth: '100%' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {vista === 'frente' ? (
+          <g transform="translate(0, 20)">
+            {/* --- FRENTE --- */}
+            
+            <Round sqlId="cabeca" cx="150" cy="50" r="35" />
+            <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
+
+            <Block sqlId="peito" x="110" y="115" w="80" h="65" />
+            <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
+            <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
+
+            {/* MEMBROS ESQUERDOS */}
+            <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
+            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
+            <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
+
+            {/* MEMBROS DIREITOS */}
+            <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
+            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
+            <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
+
+            {/* PERNAS FRENTE */}
+            <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
+            <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
+            <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
+
+            <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
+            <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
+            <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
+          </g>
+        ) : (
+          <g transform="translate(0, 20)">
+            {/* --- COSTAS --- */}
+            <Round sqlId="cabeca" cx="150" cy="50" r="35" />
+            <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
+
+            <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
+            <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
+            <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
+
+            {/* OMBROS (Ajustados para preencher costas) */}
+            <Block sqlId="ombro-esquerdo" x="170" y="115" w="65" h="40" /> 
+            <Block sqlId="ombro-direito" x="65" y="115" w="65" h="40" />
+            <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
+
+            {/* MEMBROS COSTAS */}
+            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
+            <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" />
+
+            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
+            <Round sqlId="mao-direita" cx="82" cy="295" r="15" />
+
+            {/* PERNAS COSTAS */}
+            <Block sqlId="coxa-esquerda" x="155" y="305" w="35" h="90" />
+            <Block sqlId="canela-esquerda" x="155" y="400" w="35" h="90" />
+            <Block sqlId="pe-esquerdo" x="155" y="495" w="35" h="20" radius={4} />
+
+            <Block sqlId="coxa-direita" x="110" y="305" w="35" h="90" />
+            <Block sqlId="canela-direita" x="110" y="400" w="35" h="90" />
+            <Block sqlId="pe-direito" x="110" y="495" w="35" h="20" radius={4} />
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+};
+
+export default CorpoHumano;
+</file>
+
+<file path="sitema-regulacao/src/App.jsx">
+import React, { useState, useEffect } from 'react';
+import CorpoHumano from './CorpoHumano';
+import { supabase } from './supabaseClient';
+import Login from './Login';
+import ModalForm from './ModalForm';
+import Toast from './Toast';
+import './App.css'; 
+import HeaderSecao from './HeaderSecao';
+
+function App() {
+  // --- ESTADOS GERAIS ---
+  const [darkMode, setDarkMode] = useState(true);
+  const [parteSelecionada, setParteSelecionada] = useState(null);
+  const [subAreaSelecionada, setSubAreaSelecionada] = useState(null);
+  const [vista, setVista] = useState('frente');
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // DADOS DO BANCO & CÉREBRO (MAPA)
+  const [subMenus, setSubMenus] = useState([]);
+  const [listaProtocolos, setListaProtocolos] = useState([]);
+  const [mapaPartes, setMapaPartes] = useState({}); // Dicionário de nomes
+
+  // MODAL E NOTIFICAÇÕES
+  const [modalAberto, setModalAberto] = useState(false);
+  const [itemEmEdicao, setItemEmEdicao] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  // BUSCA E LOGIN
+  const [termoBusca, setTermoBusca] = useState('');
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  const [sessao, setSessao] = useState(null);
+  const [mostrarLogin, setMostrarLogin] = useState(false);
+  
+  // --- PERMISSÕES E ONLINE CHECKER ---
+  const [isAdmin, setIsAdmin] = useState(false);         
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
+  const [meuPerfil, setMeuPerfil] = useState(null);
+  const [usuariosOnline, setUsuariosOnline] = useState([]);
+  const [mostrarListaOnline, setMostrarListaOnline] = useState(false);
+  const [modalUsuariosAberto, setModalUsuariosAberto] = useState(false);
+  const [listaUsuarios, setListaUsuarios] = useState([]);
+
+  // --- EFEITOS (Dark Mode e Auth) ---
+  useEffect(() => {
+    if (darkMode) document.body.classList.add('dark-mode');
+    else document.body.classList.remove('dark-mode');
+  }, [darkMode]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessao(session);
+      if (session) carregarPerfilUsuario(session.user.id);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessao(session);
+      if (session) {
+        carregarPerfilUsuario(session.user.id);
+        setMostrarLogin(false);
+      } else {
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        setMeuPerfil(null);
+        setModoEdicao(false);
+        setParteSelecionada(null);
+        setUsuariosOnline([]);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // --- CARREGA O MAPA DE NOMES (CÉREBRO) ---
+  useEffect(() => {
+    async function fetchBodyParts() {
+      const { data } = await supabase.from('body_parts').select('id, display_name');
+      if (data) {
+        const mapa = {};
+        data.forEach(part => {
+          mapa[part.id] = { label: part.display_name, id: part.id };
+        });
+        setMapaPartes(mapa);
+      }
+    }
+    fetchBodyParts();
+  }, []);
+
+  async function carregarPerfilUsuario(userId) {
+    const { data } = await supabase.from('profiles').select('role, nickname').eq('id', userId).single();
+    if (data) {
+      setMeuPerfil(data);
+      const ehSuper = data.role === 'super_admin';
+      setIsAdmin(data.role === 'admin' || ehSuper);
+      setIsSuperAdmin(ehSuper);
+    }
+  }
+
+  // --- ONLINE CHECKER ---
+  useEffect(() => {
+    if (!sessao?.user || !meuPerfil) return;
+    const channel = supabase.channel('sala-global', { config: { presence: { key: sessao.user.id } } });
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const newState = channel.presenceState();
+        const listaTemporaria = [];
+        for (let key in newState) {
+          const usuario = newState[key][0];
+          if (usuario) listaTemporaria.push(usuario);
+        }
+        const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
+        setUsuariosOnline(unicos);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            userId: sessao.user.id,
+            label: meuPerfil.nickname || sessao.user.email,
+            entrou_em: new Date().toISOString()
+          });
+        }
+      });
+    return () => { supabase.removeChannel(channel); };
+  }, [sessao, meuPerfil]);
+
+  // --- CARREGAMENTO DE DADOS DA PARTE ---
+  useEffect(() => {
+    if (parteSelecionada) {
+      setTermoBusca('');
+      setSubAreaSelecionada(null); 
+      carregarDadosDaParte(parteSelecionada);
+    }
+  }, [parteSelecionada]);
+
+  async function carregarDadosDaParte(idParte) {
+    setLoading(true);
+    const { data: subs } = await supabase.from('sub_areas').select('*').eq('body_part_id', idParte).order('name');
+    setSubMenus(subs || []);
+    if (subs && subs.length > 0) setSubAreaSelecionada(subs[0].id);
+    else setSubAreaSelecionada(null);
+
+    const { data: protos } = await supabase.from('protocols').select('*').eq('body_part_id', idParte).order('created_at', { ascending: false });
+    setListaProtocolos(protos || []);
+    setLoading(false);
+  }
+
+  const protocolosVisiveis = subAreaSelecionada ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada) : []; 
+
+  // --- FUNÇÕES DE RENOMEAR (LIVE EDIT) ---
+  const renomearParte = async (novoNome) => {
+    if (!isAdmin || !parteSelecionada) return;
+    const { error } = await supabase.from('body_parts').update({ display_name: novoNome }).eq('id', parteSelecionada);
+    if (!error) {
+      setToast({ mensagem: 'Nome atualizado!', tipo: 'sucesso' });
+      // Atualiza o mapa localmente
+      setMapaPartes(prev => ({
+        ...prev,
+        [parteSelecionada]: { ...prev[parteSelecionada], label: novoNome }
+      }));
+    } else {
+      setToast({ mensagem: 'Erro ao renomear.', tipo: 'erro' });
+    }
+  };
+
+  const renomearSubArea = async (idSub, nomeAtual) => {
+    if (!isAdmin || !modoEdicao) return;
+    const novoNome = window.prompt("Novo nome para a categoria:", nomeAtual);
+    if (novoNome && novoNome !== nomeAtual) {
+      const { error } = await supabase.from('sub_areas').update({ name: novoNome }).eq('id', idSub);
+      if (!error) {
+        setToast({ mensagem: 'Categoria renomeada!', tipo: 'sucesso' });
+        carregarDadosDaParte(parteSelecionada);
+      }
+    }
+  };
+
+  // --- BUSCA GLOBAL ---
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (termoBusca.length > 2) realizarBusca(termoBusca);
+      else setResultadosBusca([]);
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [termoBusca]);
+
+  async function realizarBusca(texto) {
+    setBuscando(true);
+    setParteSelecionada(null);
+    const { data, error } = await supabase.from('protocols').select('*, body_parts(display_name)')
+      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`).limit(20);
+    
+    if (error) {
+       const { data: dataBackup } = await supabase.from('protocols').select('*')
+        .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`).limit(20);
+       setResultadosBusca(dataBackup || []);
+    } else {
+      setResultadosBusca(data || []);
+    }
+    setBuscando(false);
+  }
+
+  // --- CRUD GERAL ---
+  const abrirModalCriar = () => { 
+    if (!parteSelecionada || !isAdmin) return;
+    if (!subAreaSelecionada) { alert("⚠️ Crie uma sub-categoria antes."); return; }
+    setItemEmEdicao(null); setModalAberto(true); 
+  };
+  
+  const abrirModalEditar = (item) => { if (!isAdmin) return; setItemEmEdicao(item); setModalAberto(true); };
+
+  const salvarDadosDoModal = async (dados) => {
+    setModalAberto(false);
+    try {
+      if (itemEmEdicao) {
+        const { error } = await supabase.from('protocols').update({ problema: dados.problema, locais: dados.locais, informacoes: dados.informacoes, exame: dados.exame }).eq('id', itemEmEdicao.id);
+        if (error) throw error;
+        setToast({ mensagem: 'Atualizado!', tipo: 'sucesso' });
+      } else {
+        const { error } = await supabase.from('protocols').insert([{ body_part_id: parteSelecionada, sub_area_id: subAreaSelecionada, problema: dados.problema, locais: dados.locais, informacoes: dados.informacoes, exame: dados.exame || "Consulta" }]);
+        if (error) throw error;
+        setToast({ mensagem: 'Adicionado!', tipo: 'sucesso' });
+      }
+      if (parteSelecionada) carregarDadosDaParte(parteSelecionada);
+      if (termoBusca) realizarBusca(termoBusca);
+    } catch (e) { setToast({ mensagem: 'Erro ao salvar.', tipo: 'erro' }); }
+  };
+
+  const remover = async (id, origem = 'lista') => {
+    if (!isAdmin || !window.confirm("Apagar item?")) return;
+    const { error } = await supabase.from('protocols').delete().eq('id', id);
+    if (!error) {
+      setToast({ mensagem: 'Removido.', tipo: 'sucesso' });
+      if (origem === 'busca') setResultadosBusca(prev => prev.filter(item => item.id !== id));
+      else carregarDadosDaParte(parteSelecionada);
+    }
+  };
+
+  const apagarSubMenu = async (idSub, nomeSub) => {
+    if (!isAdmin || !modoEdicao) return;
+    if (window.confirm(`Excluir categoria "${nomeSub}"?`)) {
+      const { error } = await supabase.from('sub_areas').delete().eq('id', idSub);
+      if (!error) { if (subAreaSelecionada === idSub) setSubAreaSelecionada(null); carregarDadosDaParte(parteSelecionada); }
+    }
+  };
+
+  // --- SUPER ADMIN ---
+  const abrirModalUsuarios = async () => {
+    if (!isSuperAdmin) return;
+    setModalUsuariosAberto(true);
+    const { data } = await supabase.from('profiles').select('*').order('email');
+    setListaUsuarios(data || []);
+  };
+
+  const alterarCargo = async (idUsuario, novoCargo) => {
+    if (!window.confirm(`Mudar cargo para ${novoCargo.toUpperCase()}?`)) return;
+    const { error } = await supabase.from('profiles').update({ role: novoCargo }).eq('id', idUsuario);
+    if (!error) {
+      setToast({ mensagem: 'Cargo atualizado!', tipo: 'sucesso' });
+      const { data } = await supabase.from('profiles').select('*').order('email');
+      setListaUsuarios(data || []);
+    }
+  };
+
+  const editarNickname = async (idUsuario, nicknameAtual) => {
+    const novoNick = window.prompt("Digite o novo Nickname (deixe vazio para usar o email):", nicknameAtual || "");
+    if (novoNick === null) return; 
+
+    const { error } = await supabase.from('profiles').update({ nickname: novoNick || null }).eq('id', idUsuario);
+    if (!error) {
+      setToast({ mensagem: 'Nickname atualizado!', tipo: 'sucesso' });
+      if (idUsuario === sessao.user.id) setMeuPerfil(prev => ({ ...prev, nickname: novoNick || null }));
+      const { data } = await supabase.from('profiles').select('*').order('email');
+      setListaUsuarios(data || []);
+    } else {
+      alert("Erro ao mudar nickname.");
+    }
+  };
+
+  // --- RENDERIZAÇÃO ---
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      
+      {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
+      <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
+      {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
+
+      {/* LISTA ONLINE */}
+      {mostrarListaOnline && (
+        <div style={{
+          position: 'absolute', top: '70px', right: '100px', width: '250px', backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--destaque)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', zIndex: 3000, padding: '10px'
+        }}>
+          <div style={{fontSize:'12px', fontWeight:'bold', color:'var(--texto-secundario)', marginBottom:'8px', display:'flex', justifyContent:'space-between'}}>
+            <span>USUÁRIOS ONLINE ({usuariosOnline.length})</span>
+            <span style={{cursor:'pointer'}} onClick={()=>setMostrarListaOnline(false)}>✖</span>
+          </div>
+          <div style={{maxHeight:'200px', overflowY:'auto'}}>
+            {usuariosOnline.map((user, idx) => (
+               <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', padding:'5px 0', borderBottom:'1px solid var(--borda)'}}>
+                 <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
+                 <span style={{fontSize:'12px', color:'var(--texto-primario)'}}>
+                   {user.userId === sessao?.user?.id ? 'Você' : (user.label.includes('@') ? user.label.split('@')[0] : user.label)}
+                 </span>
+               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GESTÃO EQUIPE */}
+      {modalUsuariosAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '700px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+              <h2 style={{ margin: 0, color: 'var(--destaque)' }}>Gestão da Equipe</h2>
+              <button onClick={() => setModalUsuariosAberto(false)} style={{ background: 'none', border: 'none', color: 'var(--texto-primario)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--texto-primario)' }}>
+              <thead><tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Usuário / Nickname</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr></thead>
+              <tbody>
+                {listaUsuarios.map(u => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
+                    <td style={{ padding: '10px', fontSize:'14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div>
+                           <div style={{ fontWeight: 'bold' }}>{u.nickname || u.email} {u.role === 'super_admin' && '👑'}</div>
+                           {u.nickname && <div style={{ fontSize: '10px', color: 'var(--texto-secundario)' }}>{u.email}</div>}
+                        </div>
+                        <button onClick={() => editarNickname(u.id, u.nickname)} title="Editar Apelido" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>
+                      {u.role !== 'super_admin' && (u.role === 'admin' ? 
+                        <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
+                        <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER PRINCIPAL */}
+      <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--borda)', flexShrink: 0 }}>
+        <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--destaque)' }}>SISREG<span style={{ fontSize: '10px', opacity: 0.7 }}>PRO</span></div>
+        
+        {sessao && (
+          <div style={{ flex: 1, maxWidth: '400px', margin: '0 20px', position: 'relative' }}>
+            <span style={{position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)'}}>🔍</span>
+            <input type="text" placeholder="Pesquisar..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} style={{ width: '100%', padding: '8px 15px 8px 35px', borderRadius: '20px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }} />
+            {termoBusca && <button onClick={() => setTermoBusca('')} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', border:'none', background:'transparent', cursor:'pointer', color:'var(--texto-secundario)'}}>✖</button>}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {sessao && (
+            <button onClick={() => setMostrarListaOnline(!mostrarListaOnline)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', border: '1px solid #00e676', backgroundColor: 'rgba(0, 230, 118, 0.1)', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: '#00e676' }}>
+              <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
+              {usuariosOnline.length} ON
+            </button>
+          )}
+
+          {sessao?.user?.email && (
+            <div style={{ textAlign: 'right', fontSize: '12px' }}>
+              <span style={{ color: 'var(--texto-secundario)' }}>Olá, </span>
+              <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>{meuPerfil?.nickname || sessao.user.email} {isSuperAdmin && '👑'}</span>
+            </div>
+          )}
+
+          <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
+          {!sessao ? (
+            <button onClick={() => setMostrarLogin(true)} style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Entrar</button>
+          ) : (
+            <>
+              {isSuperAdmin && <button onClick={abrirModalUsuarios} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #FFD700', color: '#FFD700', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}>👥 Equipe</button>}
+              {isAdmin && <button onClick={() => setModoEdicao(!modoEdicao)} style={{ padding: '6px 12px', borderRadius: '20px', border: `1px solid ${modoEdicao ? '#ff5252' : 'var(--borda)'}`, color: modoEdicao ? '#ff5252' : 'var(--texto-secundario)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>{modoEdicao ? '🔓 EDITANDO' : '🔒 ADMIN'}</button>}
+              <button onClick={() => supabase.auth.signOut()} style={{ fontSize: '12px', color: 'var(--texto-secundario)', background:'none', border:'none', cursor:'pointer', textDecoration: 'underline' }}>Sair</button>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* CONTEÚDO PRINCIPAL */}
+      <main style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+        {!sessao ? (
+          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto-primario)', textAlign: 'center', padding: '20px' }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔒</div>
+            <h1 style={{ color: 'var(--destaque)' }}>Acesso Restrito</h1>
+            <p style={{ maxWidth: '400px', lineHeight: '1.6', color: 'var(--texto-secundario)', marginBottom: '30px' }}>Faça login para acessar o sistema.</p>
+            <button onClick={() => setMostrarLogin(true)} style={{ padding: '12px 30px', fontSize: '16px', backgroundColor: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fazer Login</button>
+          </div>
+        ) : (
+          <>
+            {/* PAINEL ESQUERDO: BONECO */}
+            <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
+              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
+                 <CorpoHumano 
+                   aoSelecionar={(info) => setParteSelecionada(info.id || info)} 
+                   parteAtiva={parteSelecionada} 
+                   vista={vista}
+                   mapaDeNomes={mapaPartes} 
+                 />
+              </div>
+            </section>
+            
+            {/* PAINEL DIREITO: CONTEÚDO */}
+            <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
+              {termoBusca.length > 0 ? (
+                <div style={{ animation: 'fadeIn 0.3s' }}>
+                  <h2 style={{ color: 'var(--destaque)', margin: 0 }}>Busca Global</h2>
+                  <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
+                  {!buscando && resultadosBusca.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>{resultadosBusca.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={(id) => remover(id, 'busca')} showTag={true} />)}</div>
+                  ) : <p>Nada encontrado.</p>}
+                </div>
+              ) : (
+                parteSelecionada ? (
+                  <div style={{ animation: 'fadeIn 0.3s' }}>
+                    
+                    {/* HEADER SEÇÃO COM RENAME */}
+                    <HeaderSecao 
+                      parteSelecionada={parteSelecionada}
+                      nomeAtual={mapaPartes[parteSelecionada]?.label || parteSelecionada} 
+                      isAdmin={isAdmin} 
+                      modoEdicao={modoEdicao} 
+                      aoAbrirModalProtocolo={abrirModalCriar} 
+                      aoAtualizar={() => carregarDadosDaParte(parteSelecionada)}
+                      onRename={renomearParte} 
+                    />
+
+                    {/* SUB-MENUS */}
+                    {subMenus.length > 0 ? (
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
+                        {subMenus.map(sub => (
+                          <div key={sub.id} style={{ position: 'relative' }}>
+                            <button onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
+                            {modoEdicao && isAdmin && (
+                              <>
+                                <button onClick={(e) => { e.stopPropagation(); apagarSubMenu(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '-8px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ff5252', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }}>X</button>
+                                <button onClick={(e) => { e.stopPropagation(); renomearSubArea(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '15px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#2196F3', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }} title="Renomear">✎</button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ padding: '15px', background: 'rgba(255, 165, 0, 0.1)', borderRadius: '8px', margin: '20px 0', color: 'orange', fontSize: '13px' }}>⚠️ Crie uma categoria clicando no <strong>+</strong> acima.</div>
+                    )}
+                    <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
+                    {loading && <p>Carregando...</p>}
+                    {!loading && protocolosVisiveis.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>{protocolosVisiveis.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />)}</div>
+                    ) : (
+                      !loading && subMenus.length > 0 && <div style={{textAlign:'center', color:'var(--texto-secundario)', padding:'20px', border:'2px dashed var(--borda)', borderRadius:'10px'}}><p>Nenhum protocolo nesta seção.</p></div>
+                    )}
+                  </div>
+                ) : <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}><span style={{ fontSize: '40px' }}>👈</span><h3>Selecione uma área</h3></div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag }) => {
+  const renderLocais = (texto) => texto ? texto.split('/').map((p, i, a) => <span key={i}>{p.trim()}{i < a.length - 1 && <span style={{ color: 'var(--destaque)', fontWeight: 'bold', margin: '0 6px' }}>/</span>}</span>) : null;
+  return (
+    <div style={{ padding: '15px', borderRadius: '8px', backgroundColor: 'var(--bg-pagina)', borderLeft: '4px solid var(--destaque)', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+      {showTag && item.body_parts && <span style={{ fontSize:'10px', textTransform:'uppercase', background:'var(--destaque)', color:'#fff', padding:'2px 6px', borderRadius:'4px', marginBottom:'5px', display:'inline-block' }}>{item.body_parts.display_name}</span>}
+      <h4 style={{ margin: '0 0 8px 0', color: 'var(--texto-primario)', fontSize: '16px' }}>{item.problema}</h4>
+      <div style={{ fontSize: '13px', color: 'var(--texto-secundario)', display:'flex', flexDirection:'column', gap:'8px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}><span style={{ fontSize: '14px', lineHeight: '1.2' }}>🏥</span><div style={{ flex: 1 }}><strong style={{color:'var(--texto-primario)'}}>Local:</strong> {renderLocais(item.locais)}</div></div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}><span style={{ fontSize: '14px', lineHeight: '1.2' }}>📋</span><div style={{ flex: 1 }}><strong style={{color:'var(--texto-primario)'}}>Exame:</strong> {item.exame}</div></div>
+        {item.informacoes && <div style={{ marginTop: '5px', background: 'rgba(128,128,128,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--texto-secundario)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}><span style={{ fontSize: '14px', lineHeight: '1.4' }}>ℹ️</span><span style={{ flex: 1, color: 'var(--texto-primario)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: '1.4' }}><strong>Info:</strong> {item.informacoes}</span></div>}
+      </div>
+      {modoEdicao && isAdmin && <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}><button onClick={() => onEdit(item)} style={{ border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px', fontWeight: 'bold' }}>Editar</button><button onClick={() => onRemove(item.id)} style={{ border: '1px solid #ff5252', color: '#ff5252', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px' }}>X</button></div>}
+    </div>
+  );
+};
+
+export default App;
+</file>
+
+</files>

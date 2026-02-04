@@ -6,6 +6,7 @@ import ModalForm from './ModalForm';
 import Toast from './Toast';
 import './App.css'; 
 import HeaderSecao from './HeaderSecao';
+import NovaSenha from './NovaSenha'; // <--- IMPORT NOVO
 
 function App() {
   // --- ESTADOS GERAIS ---
@@ -19,12 +20,13 @@ function App() {
   // DADOS DO BANCO & CÉREBRO (MAPA)
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
-  const [mapaPartes, setMapaPartes] = useState({}); // Dicionário de nomes
+  const [mapaPartes, setMapaPartes] = useState({}); 
 
-  // MODAL E NOTIFICAÇÕES
+  // MODAL, NOTIFICAÇÕES E RECUPERAÇÃO
   const [modalAberto, setModalAberto] = useState(false);
   const [itemEmEdicao, setItemEmEdicao] = useState(null);
   const [toast, setToast] = useState(null);
+  const [mostraNovaSenha, setMostraNovaSenha] = useState(false); // <--- ESTADO NOVO
 
   // BUSCA E LOGIN
   const [termoBusca, setTermoBusca] = useState('');
@@ -34,7 +36,7 @@ function App() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   
   // --- PERMISSÕES E ONLINE CHECKER ---
-  const [isAdmin, setIsAdmin] = useState(false);         
+  const [isAdmin, setIsAdmin] = useState(false);          
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
   const [meuPerfil, setMeuPerfil] = useState(null);
   const [usuariosOnline, setUsuariosOnline] = useState([]);
@@ -48,14 +50,23 @@ function App() {
     else document.body.classList.remove('dark-mode');
   }, [darkMode]);
 
+  // --- AUTENTICAÇÃO E RECUPERAÇÃO DE SENHA ---
   useEffect(() => {
+    // 1. Pega sessão inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessao(session);
       if (session) carregarPerfilUsuario(session.user.id);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Escuta mudanças (Login, Logout, RECUPERAÇÃO)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSessao(session);
+
+      // SE O USUÁRIO CLICOU NO LINK DE EMAIL DE RECUPERAÇÃO:
+      if (event === 'PASSWORD_RECOVERY') {
+        setMostraNovaSenha(true);
+      }
+
       if (session) {
         carregarPerfilUsuario(session.user.id);
         setMostrarLogin(false);
@@ -188,7 +199,7 @@ function App() {
     setParteSelecionada(null);
     const { data, error } = await supabase.from('protocols').select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`).limit(20);
-    
+     
     if (error) {
        const { data: dataBackup } = await supabase.from('protocols').select('*')
         .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`).limit(20);
@@ -280,9 +291,13 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       
+      {/* MODAIS GERAIS */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
+      
+      {/* MODAL DE NOVA SENHA (ATIVADO PELO E-MAIL) */}
+      {mostraNovaSenha && <NovaSenha aoFinalizar={() => setMostraNovaSenha(false)} />}
 
       {/* LISTA ONLINE */}
       {mostrarListaOnline && (
