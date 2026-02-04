@@ -35,8 +35,9 @@ function App() {
   // --- PERMISSÕES E ONLINE CHECKER ---
   const [isAdmin, setIsAdmin] = useState(false);         
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
+  const [meuPerfil, setMeuPerfil] = useState(null); // Guarda role e nickname
   
-  // NOVO: Lista de usuários online (contém objetos { id, email, entrou_em })
+  // Lista de usuários online
   const [usuariosOnline, setUsuariosOnline] = useState([]);
   const [mostrarListaOnline, setMostrarListaOnline] = useState(false);
   
@@ -53,77 +54,70 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessao(session);
-      if (session) checarPermissoes(session.user.id);
+      if (session) carregarPerfilUsuario(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessao(session);
       if (session) {
-        checarPermissoes(session.user.id);
+        carregarPerfilUsuario(session.user.id);
         setMostrarLogin(false);
       } else {
         setIsAdmin(false);
         setIsSuperAdmin(false);
+        setMeuPerfil(null);
         setModoEdicao(false);
         setParteSelecionada(null);
-        setUsuariosOnline([]); // Limpa lista ao sair
+        setUsuariosOnline([]);
       }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- ONLINE CHECKER (PRESENCE V2 - UNIVERSAL) ---
+  // Busca dados do perfil (Role e Nickname)
+  async function carregarPerfilUsuario(userId) {
+    const { data, error } = await supabase.from('profiles').select('role, nickname').eq('id', userId).single();
+    if (data) {
+      setMeuPerfil(data);
+      const ehSuper = data.role === 'super_admin';
+      setIsAdmin(data.role === 'admin' || ehSuper);
+      setIsSuperAdmin(ehSuper);
+    }
+  }
+
+  // --- ONLINE CHECKER (PRESENCE V3 - COM NICKNAME) ---
   useEffect(() => {
-    if (!sessao?.user) return;
+    if (!sessao?.user || !meuPerfil) return; // Só conecta se tiver perfil carregado
 
     const channel = supabase.channel('sala-global', {
-      config: {
-        presence: {
-          key: sessao.user.id,
-        },
-      },
+      config: { presence: { key: sessao.user.id } },
     });
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
         const listaTemporaria = [];
-        
-        // Converte o formato do Supabase para uma lista simples
         for (let key in newState) {
-          const usuario = newState[key][0]; // Pega os dados do usuário
+          const usuario = newState[key][0];
           if (usuario) listaTemporaria.push(usuario);
         }
-        
-        // Remove duplicados (caso haja múltiplas abas do mesmo user)
-        const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.email===v.email))===i);
-        
+        // Remove duplicados
+        const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
         setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // AQUI ESTÁ O SEGREDO: Enviamos o email junto com o sinal
+          // ENVIA O NICKNAME (SE TIVER) OU O EMAIL
           await channel.track({
-            id: sessao.user.id,
-            email: sessao.user.email,
+            userId: sessao.user.id,
+            label: meuPerfil.nickname || sessao.user.email, // Aqui está a mágica
             entrou_em: new Date().toISOString()
           });
         }
       });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessao]);
-
-  async function checarPermissoes(userId) {
-    const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
-    if (data) {
-      const ehSuper = data.role === 'super_admin';
-      setIsAdmin(data.role === 'admin' || ehSuper);
-      setIsSuperAdmin(ehSuper);
-    }
-  }
+    return () => { supabase.removeChannel(channel); };
+  }, [sessao, meuPerfil]); // Recarrega se o perfil mudar
 
   // --- CARREGAMENTO DE DADOS ---
   useEffect(() => {
@@ -217,7 +211,7 @@ function App() {
     }
   };
 
-  // --- SUPER ADMIN ---
+  // --- SUPER ADMIN (Gestão de Usuários e Nicknames) ---
   const abrirModalUsuarios = async () => {
     if (!isSuperAdmin) return;
     setModalUsuariosAberto(true);
@@ -235,6 +229,26 @@ function App() {
     }
   };
 
+  // EDITAR NICKNAME
+  const editarNickname = async (idUsuario, nicknameAtual) => {
+    const novoNick = window.prompt("Digite o novo Nickname (deixe vazio para usar o email):", nicknameAtual || "");
+    if (novoNick === null) return; // Cancelou
+
+    const { error } = await supabase.from('profiles').update({ nickname: novoNick || null }).eq('id', idUsuario);
+    if (!error) {
+      setToast({ mensagem: 'Nickname atualizado!', tipo: 'sucesso' });
+      // Se eu mudei o meu próprio nick, atualizo o estado local
+      if (idUsuario === sessao.user.id) {
+         setMeuPerfil(prev => ({ ...prev, nickname: novoNick || null }));
+      }
+      // Atualiza a lista da equipe
+      const { data } = await supabase.from('profiles').select('*').order('email');
+      setListaUsuarios(data || []);
+    } else {
+      alert("Erro ao mudar nickname.");
+    }
+  };
+
   // --- RENDERIZAÇÃO ---
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -243,7 +257,7 @@ function App() {
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
-      {/* POPUP DE USUÁRIOS ONLINE (HAMACHI STYLE) */}
+      {/* LISTA ONLINE */}
       {mostrarListaOnline && (
         <div style={{
           position: 'absolute', top: '70px', right: '100px',
@@ -261,7 +275,8 @@ function App() {
                <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', padding:'5px 0', borderBottom:'1px solid var(--borda)'}}>
                  <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
                  <span style={{fontSize:'12px', color:'var(--texto-primario)'}}>
-                   {user.email === sessao?.user?.email ? 'Você' : user.email.split('@')[0]}
+                   {/* Mostra Nickname ou parte do email */}
+                   {user.userId === sessao?.user?.id ? 'Você' : (user.label.includes('@') ? user.label.split('@')[0] : user.label)}
                  </span>
                </div>
             ))}
@@ -269,20 +284,38 @@ function App() {
         </div>
       )}
 
-      {/* MODAL GESTÃO EQUIPE (SUPER ADMIN) */}
+      {/* MODAL GESTÃO EQUIPE */}
       {modalUsuariosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '700px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
               <h2 style={{ margin: 0, color: 'var(--destaque)' }}>Gestão da Equipe</h2>
               <button onClick={() => setModalUsuariosAberto(false)} style={{ background: 'none', border: 'none', color: 'var(--texto-primario)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--texto-primario)' }}>
-              <thead><tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr></thead>
+              <thead><tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Usuário / Nickname</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr></thead>
               <tbody>
                 {listaUsuarios.map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
-                    <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
+                    <td style={{ padding: '10px', fontSize:'14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div>
+                           {/* MOSTRA O NICKNAME COM DESTAQUE, EMAIL PEQUENO EMBAIXO */}
+                           <div style={{ fontWeight: 'bold' }}>
+                              {u.nickname || u.email} {u.role === 'super_admin' && '👑'}
+                           </div>
+                           {u.nickname && <div style={{ fontSize: '10px', color: 'var(--texto-secundario)' }}>{u.email}</div>}
+                        </div>
+                        {/* BOTÃO EDITAR NICKNAME */}
+                        <button 
+                          onClick={() => editarNickname(u.id, u.nickname)}
+                          title="Editar Apelido"
+                          style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </td>
                     <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
                     <td style={{ padding: '10px', textAlign: 'right' }}>
                       {u.role !== 'super_admin' && (u.role === 'admin' ? 
@@ -312,7 +345,7 @@ function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           
-          {/* BOTÃO ONLINE (UNIVERSAL) */}
+          {/* BOTÃO ONLINE */}
           {sessao && (
             <button 
               onClick={() => setMostrarListaOnline(!mostrarListaOnline)}
@@ -328,7 +361,18 @@ function App() {
             </button>
           )}
 
-          {sessao?.user?.email && <div style={{ textAlign: 'right', fontSize: '12px' }}><span style={{ color: 'var(--texto-secundario)' }}>Olá, </span><span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>{sessao.user.email} {isSuperAdmin && '👑'}</span></div>}
+          {/* SAUDAÇÃO COM NICKNAME */}
+          {sessao?.user?.email && (
+            <div style={{ textAlign: 'right', fontSize: '12px' }}>
+              <span style={{ color: 'var(--texto-secundario)' }}>Olá, </span>
+              <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>
+                {/* AQUI: Se tiver nickname, mostra ele. Senão, mostra email. */}
+                {meuPerfil?.nickname || sessao.user.email} 
+                {isSuperAdmin && '👑'}
+              </span>
+            </div>
+          )}
+
           <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
           {!sessao ? (
             <button onClick={() => setMostrarLogin(true)} style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Entrar</button>
