@@ -32,9 +32,10 @@ function App() {
   const [sessao, setSessao] = useState(null);
   const [mostrarLogin, setMostrarLogin] = useState(false);
   
-  // --- PERMISSÕES E GESTÃO DE EQUIPE ---
+  // --- PERMISSÕES, GESTÃO DE EQUIPE E ONLINE CHECKER ---
   const [isAdmin, setIsAdmin] = useState(false);         
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
+  const [onlineUsers, setOnlineUsers] = useState(new Set()); // Armazena IDs de quem está online
   
   // Modal de Gestão de Usuários (Exclusivo Super Admin)
   const [modalUsuariosAberto, setModalUsuariosAberto] = useState(false);
@@ -67,26 +68,49 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function checarPermissoes(userId) {
-    console.log("🔍 [DIAGNÓSTICO] Buscando perfil para ID:", userId);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
+  // --- ONLINE CHECKER (PRESENCE) ---
+  useEffect(() => {
+    if (!sessao?.user) return;
 
-    if (error) {
-      console.error("❌ [DIAGNÓSTICO] Erro ao buscar perfil:", error.message);
-    } 
-    
+    // 1. Cria um canal de comunicação em tempo real
+    const channel = supabase.channel('sala-global', {
+      config: {
+        presence: {
+          key: sessao.user.id, // Identifica o usuário pelo ID
+        },
+      },
+    });
+
+    // 2. Escuta quem entra e sai (Sync)
+    channel.on('presence', { event: 'sync' }, () => {
+        const newState = channel.presenceState();
+        // Converte o objeto estranho do Supabase em um Set simples de IDs
+        const idsOnline = new Set(Object.keys(newState));
+        setOnlineUsers(idsOnline);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // 3. Assim que conectar, avisa: "Estou Online!"
+          await channel.track({
+            online_at: new Date().toISOString(),
+            email: sessao.user.email, 
+          });
+        }
+      });
+
+    // Limpeza ao sair
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessao]);
+
+  // --- DIAGNÓSTICO DE PERMISSÕES ---
+  async function checarPermissoes(userId) {
+    const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
     if (data) {
-      console.log("✅ [DIAGNÓSTICO] Perfil encontrado! Cargo:", data.role);
       const ehSuper = data.role === 'super_admin';
-      const ehAdmin = data.role === 'admin' || ehSuper; 
-      setIsAdmin(ehAdmin);
+      setIsAdmin(data.role === 'admin' || ehSuper);
       setIsSuperAdmin(ehSuper);
-    } else {
-      console.warn("⚠️ [DIAGNÓSTICO] Usuário logado, mas SEM PERFIL na tabela 'profiles'.");
     }
   }
 
@@ -101,38 +125,17 @@ function App() {
 
   async function carregarDadosDaParte(idParte) {
     setLoading(true);
-    
-    // 1. Busca Submenus
-    const { data: subs } = await supabase
-      .from('sub_areas')
-      .select('*')
-      .eq('body_part_id', idParte)
-      .order('name');
-    
+    const { data: subs } = await supabase.from('sub_areas').select('*').eq('body_part_id', idParte).order('name');
     setSubMenus(subs || []);
+    if (subs && subs.length > 0) setSubAreaSelecionada(subs[0].id);
+    else setSubAreaSelecionada(null);
 
-    // LOGICA DE AUTO-SELEÇÃO (Substitui o botão "Todos")
-    if (subs && subs.length > 0) {
-      setSubAreaSelecionada(subs[0].id);
-    } else {
-      setSubAreaSelecionada(null);
-    }
-
-    // 2. Busca Protocolos
-    const { data: protos } = await supabase
-      .from('protocols')
-      .select('*')
-      .eq('body_part_id', idParte)
-      .order('created_at', { ascending: false });
-    
+    const { data: protos } = await supabase.from('protocols').select('*').eq('body_part_id', idParte).order('created_at', { ascending: false });
     setListaProtocolos(protos || []);
     setLoading(false);
   }
 
-  // Filtra os protocolos baseados na seleção automática
-  const protocolosVisiveis = subAreaSelecionada
-    ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada)
-    : []; 
+  const protocolosVisiveis = subAreaSelecionada ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada) : []; 
 
   // --- BUSCA GLOBAL ---
   useEffect(() => {
@@ -146,20 +149,12 @@ function App() {
   async function realizarBusca(texto) {
     setBuscando(true);
     setParteSelecionada(null);
-    
-    const { data, error } = await supabase
-      .from('protocols')
-      .select('*, body_parts(display_name)')
-      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`)
-      .limit(20);
+    const { data, error } = await supabase.from('protocols').select('*, body_parts(display_name)')
+      .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`).limit(20);
     
     if (error) {
-       console.error("Erro na busca", error);
-       const { data: dataBackup } = await supabase
-        .from('protocols')
-        .select('*')
-        .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`)
-        .limit(20);
+       const { data: dataBackup } = await supabase.from('protocols').select('*')
+        .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`).limit(20);
        setResultadosBusca(dataBackup || []);
     } else {
       setResultadosBusca(data || []);
@@ -170,56 +165,27 @@ function App() {
   // --- CRUD ---
   const abrirModalCriar = () => { 
     if (!parteSelecionada || !isAdmin) return;
-    
-    // TRAVA DE SEGURANÇA: Impede criar protocolo sem sub-menu definido
-    if (!subAreaSelecionada) {
-      alert("⚠️ Você precisa criar uma sub-categoria (ex: Olhos, Boca) antes de adicionar um protocolo.");
-      return;
-    }
-
-    setItemEmEdicao(null); 
-    setModalAberto(true); 
+    if (!subAreaSelecionada) { alert("⚠️ Crie uma sub-categoria antes."); return; }
+    setItemEmEdicao(null); setModalAberto(true); 
   };
   
-  const abrirModalEditar = (item) => { 
-    if (!isAdmin) return; 
-    setItemEmEdicao(item); 
-    setModalAberto(true); 
-  };
+  const abrirModalEditar = (item) => { if (!isAdmin) return; setItemEmEdicao(item); setModalAberto(true); };
 
   const salvarDadosDoModal = async (dados) => {
     setModalAberto(false);
     try {
       if (itemEmEdicao) {
-        // UPDATE
-        const { error } = await supabase.from('protocols')
-          .update({ 
-            problema: dados.problema, 
-            locais: dados.locais, 
-            informacoes: dados.informacoes,
-            exame: dados.exame 
-          })
-          .eq('id', itemEmEdicao.id);
+        const { error } = await supabase.from('protocols').update({ problema: dados.problema, locais: dados.locais, informacoes: dados.informacoes, exame: dados.exame }).eq('id', itemEmEdicao.id);
         if (error) throw error;
         setToast({ mensagem: 'Atualizado!', tipo: 'sucesso' });
       } else {
-        // INSERT
-        const { error } = await supabase.from('protocols').insert([{ 
-          body_part_id: parteSelecionada, 
-          sub_area_id: subAreaSelecionada, 
-          problema: dados.problema, 
-          locais: dados.locais, 
-          informacoes: dados.informacoes,
-          exame: dados.exame || "Consulta" 
-        }]);
+        const { error } = await supabase.from('protocols').insert([{ body_part_id: parteSelecionada, sub_area_id: subAreaSelecionada, problema: dados.problema, locais: dados.locais, informacoes: dados.informacoes, exame: dados.exame || "Consulta" }]);
         if (error) throw error;
         setToast({ mensagem: 'Adicionado!', tipo: 'sucesso' });
       }
       if (parteSelecionada) carregarDadosDaParte(parteSelecionada);
       if (termoBusca) realizarBusca(termoBusca);
-    } catch (e) { 
-      setToast({ mensagem: 'Erro ao salvar.', tipo: 'erro' }); 
-    }
+    } catch (e) { setToast({ mensagem: 'Erro ao salvar.', tipo: 'erro' }); }
   };
 
   const remover = async (id, origem = 'lista') => {
@@ -236,19 +202,16 @@ function App() {
     if (!isAdmin || !modoEdicao) return;
     if (window.confirm(`Excluir categoria "${nomeSub}"?`)) {
       const { error } = await supabase.from('sub_areas').delete().eq('id', idSub);
-      if (!error) { 
-        if (subAreaSelecionada === idSub) setSubAreaSelecionada(null); 
-        carregarDadosDaParte(parteSelecionada); 
-      }
+      if (!error) { if (subAreaSelecionada === idSub) setSubAreaSelecionada(null); carregarDadosDaParte(parteSelecionada); }
     }
   };
 
-  // --- FUNÇÕES DE SUPER ADMIN ---
+  // --- SUPER ADMIN ---
   const abrirModalUsuarios = async () => {
     if (!isSuperAdmin) return;
     setModalUsuariosAberto(true);
-    const { data, error } = await supabase.from('profiles').select('*').order('email');
-    if (!error) setListaUsuarios(data || []);
+    const { data } = await supabase.from('profiles').select('*').order('email');
+    setListaUsuarios(data || []);
   };
 
   const alterarCargo = async (idUsuario, novoCargo) => {
@@ -269,6 +232,7 @@ function App() {
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
+      {/* MODAL EQUIPE COM STATUS ONLINE */}
       {modalUsuariosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
@@ -278,21 +242,33 @@ function App() {
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--texto-primario)' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr>
+                <tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Status</th><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr>
               </thead>
               <tbody>
-                {listaUsuarios.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
-                    <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
-                    <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
-                    <td style={{ padding: '10px', textAlign: 'right' }}>
-                      {u.role !== 'super_admin' && (u.role === 'admin' ? 
-                        <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
-                        <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {listaUsuarios.map(u => {
+                  const estaOnline = onlineUsers.has(u.id);
+                  return (
+                    <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
+                      {/* COLUNA STATUS HAMACHI */}
+                      <td style={{ padding: '10px', textAlign:'center' }}>
+                        <div style={{ 
+                          width: '12px', height: '12px', borderRadius: '50%', 
+                          backgroundColor: estaOnline ? '#00e676' : '#9e9e9e', // Verde ou Cinza
+                          boxShadow: estaOnline ? '0 0 8px #00e676' : 'none',
+                          display: 'inline-block'
+                        }} title={estaOnline ? "Online agora" : "Offline"}></div>
+                      </td>
+                      <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
+                      <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>
+                        {u.role !== 'super_admin' && (u.role === 'admin' ? 
+                          <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
+                          <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -354,10 +330,7 @@ function App() {
               ) : (
                 parteSelecionada ? (
                   <div style={{ animation: 'fadeIn 0.3s' }}>
-                    
                     <HeaderSecao parteSelecionada={parteSelecionada} isAdmin={isAdmin} modoEdicao={modoEdicao} aoAbrirModalProtocolo={abrirModalCriar} aoAtualizar={() => carregarDadosDaParte(parteSelecionada)} />
-                    
-                    {/* MENU DE SUB-AREAS (SEM BOTÃO TODOS) */}
                     {subMenus.length > 0 ? (
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
                         {subMenus.map(sub => (
@@ -368,16 +341,10 @@ function App() {
                         ))}
                       </div>
                     ) : (
-                      // AVISO SE NÃO TIVER NENHUMA CATEGORIA
-                      <div style={{ padding: '15px', background: 'rgba(255, 165, 0, 0.1)', borderRadius: '8px', margin: '20px 0', color: 'orange', fontSize: '13px' }}>
-                        ⚠️ Nenhuma categoria criada. Clique no <strong>+</strong> acima para criar uma antes de adicionar protocolos.
-                      </div>
+                      <div style={{ padding: '15px', background: 'rgba(255, 165, 0, 0.1)', borderRadius: '8px', margin: '20px 0', color: 'orange', fontSize: '13px' }}>⚠️ Crie uma categoria clicando no <strong>+</strong> acima.</div>
                     )}
-
                     <hr style={{ borderColor: 'var(--borda)', opacity: 0.3, margin: '20px 0' }} />
-                    
                     {loading && <p>Carregando...</p>}
-                    
                     {!loading && protocolosVisiveis.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>{protocolosVisiveis.map((item) => <CardProtocolo key={item.id} item={item} isAdmin={isAdmin} modoEdicao={modoEdicao} onEdit={abrirModalEditar} onRemove={remover} />)}</div>
                     ) : (
@@ -394,61 +361,17 @@ function App() {
   );
 }
 
-// COMPONENTE CARD ATUALIZADO (Layout e Icones Corrigidos)
 const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag }) => {
   const renderLocais = (texto) => texto ? texto.split('/').map((p, i, a) => <span key={i}>{p.trim()}{i < a.length - 1 && <span style={{ color: 'var(--destaque)', fontWeight: 'bold', margin: '0 6px' }}>/</span>}</span>) : null;
-  
   return (
     <div style={{ padding: '15px', borderRadius: '8px', backgroundColor: 'var(--bg-pagina)', borderLeft: '4px solid var(--destaque)', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
       {showTag && item.body_parts && <span style={{ fontSize:'10px', textTransform:'uppercase', background:'var(--destaque)', color:'#fff', padding:'2px 6px', borderRadius:'4px', marginBottom:'5px', display:'inline-block' }}>{item.body_parts.display_name}</span>}
-      
       <h4 style={{ margin: '0 0 8px 0', color: 'var(--texto-primario)', fontSize: '16px' }}>{item.problema}</h4>
-      
       <div style={{ fontSize: '13px', color: 'var(--texto-secundario)', display:'flex', flexDirection:'column', gap:'8px' }}>
-        
-        {/* LOCAL */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-           <span style={{ fontSize: '14px', lineHeight: '1.2' }}>🏥</span>
-           <div style={{ flex: 1 }}>
-              <strong style={{color:'var(--texto-primario)'}}>Local:</strong> {renderLocais(item.locais)}
-           </div>
-        </div>
-
-        {/* EXAME */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-           <span style={{ fontSize: '14px', lineHeight: '1.2' }}>📋</span>
-           <div style={{ flex: 1 }}>
-              <strong style={{color:'var(--texto-primario)'}}>Exame:</strong> {item.exame}
-           </div>
-        </div>
-
-        {/* INFORMAÇÕES (Agora por último, com quebra de linha correta e alinhamento do ícone) */}
-        {item.informacoes && (
-          <div style={{ 
-            marginTop: '5px',
-            background: 'rgba(128,128,128,0.1)', 
-            padding: '10px', 
-            borderRadius: '6px', 
-            borderLeft: '3px solid var(--texto-secundario)',
-            display: 'flex', 
-            alignItems: 'flex-start', // Alinha o ícone no topo se o texto for grande
-            gap: '8px'
-          }}>
-            <span style={{ fontSize: '14px', lineHeight: '1.4' }}>ℹ️</span>
-            <span style={{ 
-              flex: 1, 
-              color: 'var(--texto-primario)',
-              whiteSpace: 'pre-wrap',   // Mantém quebras de linha que o usuário digitou
-              wordBreak: 'break-word',  // Quebra palavras gigantes para não sair da tela
-              lineHeight: '1.4'
-            }}>
-              <strong>Info:</strong> {item.informacoes}
-            </span>
-          </div>
-        )}
-
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}><span style={{ fontSize: '14px', lineHeight: '1.2' }}>🏥</span><div style={{ flex: 1 }}><strong style={{color:'var(--texto-primario)'}}>Local:</strong> {renderLocais(item.locais)}</div></div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}><span style={{ fontSize: '14px', lineHeight: '1.2' }}>📋</span><div style={{ flex: 1 }}><strong style={{color:'var(--texto-primario)'}}>Exame:</strong> {item.exame}</div></div>
+        {item.informacoes && <div style={{ marginTop: '5px', background: 'rgba(128,128,128,0.1)', padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--texto-secundario)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}><span style={{ fontSize: '14px', lineHeight: '1.4' }}>ℹ️</span><span style={{ flex: 1, color: 'var(--texto-primario)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: '1.4' }}><strong>Info:</strong> {item.informacoes}</span></div>}
       </div>
-
       {modoEdicao && isAdmin && <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}><button onClick={() => onEdit(item)} style={{ border: '1px solid var(--destaque)', color: 'var(--destaque)', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px', fontWeight: 'bold' }}>Editar</button><button onClick={() => onRemove(item.id)} style={{ border: '1px solid #ff5252', color: '#ff5252', background: 'transparent', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', padding: '2px 8px' }}>X</button></div>}
     </div>
   );
