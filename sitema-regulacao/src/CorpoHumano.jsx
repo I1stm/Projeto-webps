@@ -62,34 +62,32 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
           <g transform="translate(0, 20)">
             {/* --- FRENTE --- */}
             
-            {/* CABEÇA (Redonda) e PESCOÇO (Reto) */}
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
-            {/* TRONCO (Blocos Retangulares) */}
+            {/* TRONCO */}
             <Block sqlId="peito" x="110" y="115" w="80" h="65" />
             <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
             <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
 
-            {/* MEMBROS ESQUERDOS (Lado Direito da Tela) */}
+            {/* MEMBROS FRENTE */}
             <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
-            <Block sqlId="braco-esquerdo" x="205" y="160" w="25" h="55" /> {/* Bíceps */}
-            <Block sqlId="braco-esquerdo" x="205" y="220" w="25" h="55" /> {/* Antebraço */}
+            <Block sqlId="braco-esquerdo" x="205" y="160" w="25" h="55" />
+            <Block sqlId="braco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
 
-            {/* MEMBROS DIREITOS (Lado Esquerdo da Tela) */}
             <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
-            <Block sqlId="braco-direito" x="70" y="160" w="25" h="55" /> {/* Bíceps */}
-            <Block sqlId="braco-direito" x="70" y="220" w="25" h="55" /> {/* Antebraço */}
+            <Block sqlId="braco-direito" x="70" y="160" w="25" h="55" />
+            <Block sqlId="braco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
 
-            {/* PERNAS (Blocos Longos) */}
-            <Block sqlId="perna-esquerda" x="155" y="300" w="35" h="90" />
-            <Block sqlId="perna-esquerda" x="155" y="395" w="35" h="90" />
+            {/* PERNAS FRENTE (Com pés largos = Dedos) */}
+            <Block sqlId="perna-esquerdo" x="155" y="300" w="35" h="90" />
+            <Block sqlId="perna-esquerdo" x="155" y="395" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
 
-            <Block sqlId="perna-direita" x="110" y="300" w="35" h="90" />
-            <Block sqlId="perna-direita" x="110" y="395" w="35" h="90" />
+            <Block sqlId="perna-direito" x="110" y="300" w="35" h="90" />
+            <Block sqlId="perna-direito" x="110" y="395" w="35" h="90" />
             <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
           </g>
         ) : (
@@ -98,22 +96,17 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
-            {/* COLUNA (Blocos Centrais) */}
+            {/* COLUNA */}
             <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
             <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
             <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
 
-            {/* OMBROS COSTAS (Ajustados para alinhar com os braços) */}
-            {/* Esquerdo Costas (Direita da tela) - Esticado até x=235 para cobrir o braço */}
+            {/* OMBROS E COSTAS */}
             <Block sqlId="ombro-esquerdo" x="170" y="115" w="65" h="40" /> 
-            
-            {/* Direito Costas (Esquerda da tela) - Começa em x=65 para alinhar com braço */}
             <Block sqlId="ombro-direito" x="65" y="115" w="65" h="40" />
-            
-            {/* GLÚTEOS */}
             <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
 
-            {/* MEMBROS COSTAS (Coordenadas X IDÊNTICAS à Frente) */}
+            {/* MEMBROS COSTAS */}
             <Block sqlId="braco-esquerdo" x="205" y="160" w="25" h="55" />
             <Block sqlId="braco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" />
@@ -124,11 +117,15 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
 
             <Block sqlId="perna-esquerda" x="155" y="305" w="35" h="90" />
             <Block sqlId="perna-esquerda" x="155" y="400" w="35" h="90" />
-            <Block sqlId="pe-esquerdo" x="155" y="495" w="45" h="20" radius={4} />
+            
+            {/* PÉS COSTAS (Ajustado: Mesma largura da perna e alinhado) */}
+            <Block sqlId="pe-esquerdo" x="155" y="495" w="35" h="20" radius={4} />
 
             <Block sqlId="perna-direita" x="110" y="305" w="35" h="90" />
             <Block sqlId="perna-direita" x="110" y="400" w="35" h="90" />
-            <Block sqlId="pe-direito" x="100" y="495" w="45" h="20" radius={4} />
+            
+            {/* PÉS COSTAS (Ajustado: Mesma largura da perna e alinhado) */}
+            <Block sqlId="pe-direito" x="110" y="495" w="35" h="20" radius={4} />
           </g>
         )}
       </svg>
