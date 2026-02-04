@@ -32,12 +32,15 @@ function App() {
   const [sessao, setSessao] = useState(null);
   const [mostrarLogin, setMostrarLogin] = useState(false);
   
-  // --- PERMISSÕES, GESTÃO DE EQUIPE E ONLINE CHECKER ---
+  // --- PERMISSÕES E ONLINE CHECKER ---
   const [isAdmin, setIsAdmin] = useState(false);         
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
-  const [onlineUsers, setOnlineUsers] = useState(new Set()); // Armazena IDs de quem está online
   
-  // Modal de Gestão de Usuários (Exclusivo Super Admin)
+  // NOVO: Lista de usuários online (contém objetos { id, email, entrou_em })
+  const [usuariosOnline, setUsuariosOnline] = useState([]);
+  const [mostrarListaOnline, setMostrarListaOnline] = useState(false);
+  
+  // Modal de Gestão de Usuários (Super Admin)
   const [modalUsuariosAberto, setModalUsuariosAberto] = useState(false);
   const [listaUsuarios, setListaUsuarios] = useState([]);
 
@@ -63,48 +66,56 @@ function App() {
         setIsSuperAdmin(false);
         setModoEdicao(false);
         setParteSelecionada(null);
+        setUsuariosOnline([]); // Limpa lista ao sair
       }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- ONLINE CHECKER (PRESENCE) ---
+  // --- ONLINE CHECKER (PRESENCE V2 - UNIVERSAL) ---
   useEffect(() => {
     if (!sessao?.user) return;
 
-    // 1. Cria um canal de comunicação em tempo real
     const channel = supabase.channel('sala-global', {
       config: {
         presence: {
-          key: sessao.user.id, // Identifica o usuário pelo ID
+          key: sessao.user.id,
         },
       },
     });
 
-    // 2. Escuta quem entra e sai (Sync)
-    channel.on('presence', { event: 'sync' }, () => {
+    channel
+      .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
-        // Converte o objeto estranho do Supabase em um Set simples de IDs
-        const idsOnline = new Set(Object.keys(newState));
-        setOnlineUsers(idsOnline);
+        const listaTemporaria = [];
+        
+        // Converte o formato do Supabase para uma lista simples
+        for (let key in newState) {
+          const usuario = newState[key][0]; // Pega os dados do usuário
+          if (usuario) listaTemporaria.push(usuario);
+        }
+        
+        // Remove duplicados (caso haja múltiplas abas do mesmo user)
+        const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.email===v.email))===i);
+        
+        setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // 3. Assim que conectar, avisa: "Estou Online!"
+          // AQUI ESTÁ O SEGREDO: Enviamos o email junto com o sinal
           await channel.track({
-            online_at: new Date().toISOString(),
-            email: sessao.user.email, 
+            id: sessao.user.id,
+            email: sessao.user.email,
+            entrou_em: new Date().toISOString()
           });
         }
       });
 
-    // Limpeza ao sair
     return () => {
       supabase.removeChannel(channel);
     };
   }, [sessao]);
 
-  // --- DIAGNÓSTICO DE PERMISSÕES ---
   async function checarPermissoes(userId) {
     const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
     if (data) {
@@ -232,7 +243,33 @@ function App() {
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
 
-      {/* MODAL EQUIPE COM STATUS ONLINE */}
+      {/* POPUP DE USUÁRIOS ONLINE (HAMACHI STYLE) */}
+      {mostrarListaOnline && (
+        <div style={{
+          position: 'absolute', top: '70px', right: '100px',
+          width: '250px', backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--destaque)', borderRadius: '8px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)', zIndex: 3000,
+          padding: '10px'
+        }}>
+          <div style={{fontSize:'12px', fontWeight:'bold', color:'var(--texto-secundario)', marginBottom:'8px', display:'flex', justifyContent:'space-between'}}>
+            <span>USUÁRIOS ONLINE ({usuariosOnline.length})</span>
+            <span style={{cursor:'pointer'}} onClick={()=>setMostrarListaOnline(false)}>✖</span>
+          </div>
+          <div style={{maxHeight:'200px', overflowY:'auto'}}>
+            {usuariosOnline.map((user, idx) => (
+               <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', padding:'5px 0', borderBottom:'1px solid var(--borda)'}}>
+                 <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
+                 <span style={{fontSize:'12px', color:'var(--texto-primario)'}}>
+                   {user.email === sessao?.user?.email ? 'Você' : user.email.split('@')[0]}
+                 </span>
+               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GESTÃO EQUIPE (SUPER ADMIN) */}
       {modalUsuariosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--destaque)' }}>
@@ -241,34 +278,20 @@ function App() {
               <button onClick={() => setModalUsuariosAberto(false)} style={{ background: 'none', border: 'none', color: 'var(--texto-primario)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--texto-primario)' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Status</th><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr>
-              </thead>
+              <thead><tr style={{ borderBottom: '1px solid var(--borda)', textAlign: 'left' }}><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Cargo</th><th style={{ padding: '10px', textAlign: 'right' }}>Ação</th></tr></thead>
               <tbody>
-                {listaUsuarios.map(u => {
-                  const estaOnline = onlineUsers.has(u.id);
-                  return (
-                    <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
-                      {/* COLUNA STATUS HAMACHI */}
-                      <td style={{ padding: '10px', textAlign:'center' }}>
-                        <div style={{ 
-                          width: '12px', height: '12px', borderRadius: '50%', 
-                          backgroundColor: estaOnline ? '#00e676' : '#9e9e9e', // Verde ou Cinza
-                          boxShadow: estaOnline ? '0 0 8px #00e676' : 'none',
-                          display: 'inline-block'
-                        }} title={estaOnline ? "Online agora" : "Offline"}></div>
-                      </td>
-                      <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
-                      <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
-                      <td style={{ padding: '10px', textAlign: 'right' }}>
-                        {u.role !== 'super_admin' && (u.role === 'admin' ? 
-                          <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
-                          <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {listaUsuarios.map(u => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--borda)' }}>
+                    <td style={{ padding: '10px', fontSize:'14px' }}>{u.email} {u.role === 'super_admin' && '👑'}</td>
+                    <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>
+                      {u.role !== 'super_admin' && (u.role === 'admin' ? 
+                        <button onClick={() => alterarCargo(u.id, 'user')} style={{ padding: '4px 8px', fontSize: '12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Rebaixar</button> : 
+                        <button onClick={() => alterarCargo(u.id, 'admin')} style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--destaque)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Promover</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -288,6 +311,23 @@ function App() {
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          
+          {/* BOTÃO ONLINE (UNIVERSAL) */}
+          {sessao && (
+            <button 
+              onClick={() => setMostrarListaOnline(!mostrarListaOnline)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '6px 12px', borderRadius: '20px', 
+                border: '1px solid #00e676', backgroundColor: 'rgba(0, 230, 118, 0.1)',
+                cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: '#00e676'
+              }}
+            >
+              <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
+              {usuariosOnline.length} ON
+            </button>
+          )}
+
           {sessao?.user?.email && <div style={{ textAlign: 'right', fontSize: '12px' }}><span style={{ color: 'var(--texto-secundario)' }}>Olá, </span><span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>{sessao.user.email} {isSuperAdmin && '👑'}</span></div>}
           <button onClick={() => setDarkMode(!darkMode)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>{darkMode ? '☀️' : '🌙'}</button>
           {!sessao ? (
