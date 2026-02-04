@@ -1,14 +1,15 @@
 import React from 'react';
 
-const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
+// Adicionamos 'mapaDeNomes' (o cérebro) nas props
+const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
 
-  // --- ESTILO: Blocos Arredondados (Modular) ---
+  // --- CORES & ESTILO (Tema Modular Clean) ---
   const colors = {
     fill: '#f8fafc',          // Fundo quase branco
     stroke: '#64748b',        // Borda cinza
     fillSelected: '#3b82f6',  // Azul seleção
-    strokeSelected: '#1d4ed8',// Azul borda
-    hover: '#e2e8f0'          // Hover
+    strokeSelected: '#1d4ed8',// Azul borda forte
+    hover: '#e2e8f0'          // Hover suave
   };
 
   const getStyle = (targetId) => {
@@ -23,32 +24,54 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
     };
   };
 
-  // Componente para RETÂNGULOS
+  // --- A MÁGICA DA TRADUÇÃO ---
+  // Quando clica, ele olha no mapa se esse ID tem um nome especial no banco
+  const resolverAcao = (e, sqlIdOriginal) => {
+    e.stopPropagation();
+    
+    // Tenta achar o objeto no dicionário (ex: { label: 'Coxa', id: 'coxa-dir' })
+    // Se não achar, usa o ID original mesmo.
+    const valorFinal = mapaDeNomes[sqlIdOriginal] ? mapaDeNomes[sqlIdOriginal] : sqlIdOriginal;
+    
+    if (aoSelecionar) aoSelecionar(valorFinal);
+  };
+
+  // Função auxiliar para pegar o nome legível (para o tooltip do mouse)
+  const getNomeLegivel = (id) => {
+    return mapaDeNomes[id]?.label || id;
+  };
+
+  // Componente Genérico para RETÂNGULOS (Tronco, membros)
   const Block = ({ sqlId, x, y, w, h, radius = 6 }) => (
     <rect
       x={x} y={y} width={w} height={h} rx={radius} ry={radius}
       style={getStyle(sqlId)}
-      onClick={(e) => { e.stopPropagation(); if (aoSelecionar) aoSelecionar(sqlId); }}
+      onClick={(e) => resolverAcao(e, sqlId)}
       onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
       onMouseLeave={(e) => {
         if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
         else e.target.style.fill = colors.fillSelected;
       }}
-    />
+    >
+      {/* Mostra o nome real do banco quando para o mouse em cima */}
+      <title>{getNomeLegivel(sqlId)}</title>
+    </rect>
   );
 
-  // Componente para CÍRCULOS
+  // Componente Genérico para CÍRCULOS (Cabeça, Mãos)
   const Round = ({ sqlId, cx, cy, r }) => (
     <circle
       cx={cx} cy={cy} r={r}
       style={getStyle(sqlId)}
-      onClick={(e) => { e.stopPropagation(); if (aoSelecionar) aoSelecionar(sqlId); }}
+      onClick={(e) => resolverAcao(e, sqlId)}
       onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
       onMouseLeave={(e) => {
         if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
         else e.target.style.fill = colors.fillSelected;
       }}
-    />
+    >
+      <title>{getNomeLegivel(sqlId)}</title>
+    </circle>
   );
 
   return (
@@ -69,25 +92,25 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
             <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
             <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
 
-            {/* MEMBROS ESQUERDOS (Ids Atualizados) */}
+            {/* MEMBROS ESQUERDOS */}
             <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
-            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" /> {/* Novo ID */}
-            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" /> {/* Novo ID */}
+            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
 
-            {/* MEMBROS DIREITOS (Ids Atualizados) */}
+            {/* MEMBROS DIREITOS */}
             <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
-            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" /> {/* Novo ID */}
-            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" /> {/* Novo ID */}
+            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
 
-            {/* PERNAS FRENTE (Ids Atualizados) */}
-            <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" /> {/* Novo ID */}
-            <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" /> {/* Novo ID */}
+            {/* PERNAS FRENTE */}
+            <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
+            <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
 
-            <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" /> {/* Novo ID */}
-            <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" /> {/* Novo ID */}
+            <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
+            <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
             <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
           </g>
         ) : (
@@ -100,11 +123,12 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
             <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
             <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
 
+            {/* OMBROS (Ajustados para preencher costas) */}
             <Block sqlId="ombro-esquerdo" x="170" y="115" w="65" h="40" /> 
             <Block sqlId="ombro-direito" x="65" y="115" w="65" h="40" />
             <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
 
-            {/* MEMBROS COSTAS (Ids Atualizados) */}
+            {/* MEMBROS COSTAS */}
             <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
             <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" />
@@ -113,6 +137,7 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
             <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" />
 
+            {/* PERNAS COSTAS */}
             <Block sqlId="coxa-esquerda" x="155" y="305" w="35" h="90" />
             <Block sqlId="canela-esquerda" x="155" y="400" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="495" w="35" h="20" radius={4} />

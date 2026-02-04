@@ -20,6 +20,9 @@ function App() {
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
   
+  // --- NOVO: MAPA DE NOMES (CÉREBRO DO BONECO) ---
+  const [mapaPartes, setMapaPartes] = useState({}); // Guarda { 'coxa-direita': { label: 'Coxa Direita', id: '...' } }
+
   // MODAL E NOTIFICAÇÕES
   const [modalAberto, setModalAberto] = useState(false);
   const [itemEmEdicao, setItemEmEdicao] = useState(null);
@@ -35,7 +38,7 @@ function App() {
   // --- PERMISSÕES E ONLINE CHECKER ---
   const [isAdmin, setIsAdmin] = useState(false);         
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
-  const [meuPerfil, setMeuPerfil] = useState(null); // Guarda role e nickname
+  const [meuPerfil, setMeuPerfil] = useState(null);
   
   // Lista de usuários online
   const [usuariosOnline, setUsuariosOnline] = useState([]);
@@ -74,9 +77,27 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- NOVO EFEITO: CARREGAR O MAPA DO CORPO ---
+  useEffect(() => {
+    async function fetchBodyParts() {
+      // Busca ID e Nome Visual de todas as partes cadastradas
+      const { data } = await supabase.from('body_parts').select('id, display_name');
+      
+      if (data) {
+        const mapa = {};
+        data.forEach(part => {
+          // Cria um dicionário onde a CHAVE é o ID do SQL (ex: 'coxa-direita')
+          mapa[part.id] = { label: part.display_name, id: part.id };
+        });
+        setMapaPartes(mapa);
+      }
+    }
+    fetchBodyParts();
+  }, []);
+
   // Busca dados do perfil (Role e Nickname)
   async function carregarPerfilUsuario(userId) {
-    const { data, error } = await supabase.from('profiles').select('role, nickname').eq('id', userId).single();
+    const { data } = await supabase.from('profiles').select('role, nickname').eq('id', userId).single();
     if (data) {
       setMeuPerfil(data);
       const ehSuper = data.role === 'super_admin';
@@ -85,9 +106,9 @@ function App() {
     }
   }
 
-  // --- ONLINE CHECKER (PRESENCE V3 - COM NICKNAME) ---
+  // --- ONLINE CHECKER ---
   useEffect(() => {
-    if (!sessao?.user || !meuPerfil) return; // Só conecta se tiver perfil carregado
+    if (!sessao?.user || !meuPerfil) return;
 
     const channel = supabase.channel('sala-global', {
       config: { presence: { key: sessao.user.id } },
@@ -101,23 +122,21 @@ function App() {
           const usuario = newState[key][0];
           if (usuario) listaTemporaria.push(usuario);
         }
-        // Remove duplicados
         const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
         setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // ENVIA O NICKNAME (SE TIVER) OU O EMAIL
           await channel.track({
             userId: sessao.user.id,
-            label: meuPerfil.nickname || sessao.user.email, // Aqui está a mágica
+            label: meuPerfil.nickname || sessao.user.email,
             entrou_em: new Date().toISOString()
           });
         }
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [sessao, meuPerfil]); // Recarrega se o perfil mudar
+  }, [sessao, meuPerfil]);
 
   // --- CARREGAMENTO DE DADOS ---
   useEffect(() => {
@@ -211,7 +230,7 @@ function App() {
     }
   };
 
-  // --- SUPER ADMIN (Gestão de Usuários e Nicknames) ---
+  // --- SUPER ADMIN ---
   const abrirModalUsuarios = async () => {
     if (!isSuperAdmin) return;
     setModalUsuariosAberto(true);
@@ -229,19 +248,16 @@ function App() {
     }
   };
 
-  // EDITAR NICKNAME
   const editarNickname = async (idUsuario, nicknameAtual) => {
     const novoNick = window.prompt("Digite o novo Nickname (deixe vazio para usar o email):", nicknameAtual || "");
-    if (novoNick === null) return; // Cancelou
+    if (novoNick === null) return; 
 
     const { error } = await supabase.from('profiles').update({ nickname: novoNick || null }).eq('id', idUsuario);
     if (!error) {
       setToast({ mensagem: 'Nickname atualizado!', tipo: 'sucesso' });
-      // Se eu mudei o meu próprio nick, atualizo o estado local
       if (idUsuario === sessao.user.id) {
          setMeuPerfil(prev => ({ ...prev, nickname: novoNick || null }));
       }
-      // Atualiza a lista da equipe
       const { data } = await supabase.from('profiles').select('*').order('email');
       setListaUsuarios(data || []);
     } else {
@@ -275,7 +291,6 @@ function App() {
                <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', padding:'5px 0', borderBottom:'1px solid var(--borda)'}}>
                  <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
                  <span style={{fontSize:'12px', color:'var(--texto-primario)'}}>
-                   {/* Mostra Nickname ou parte do email */}
                    {user.userId === sessao?.user?.id ? 'Você' : (user.label.includes('@') ? user.label.split('@')[0] : user.label)}
                  </span>
                </div>
@@ -300,13 +315,11 @@ function App() {
                     <td style={{ padding: '10px', fontSize:'14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div>
-                           {/* MOSTRA O NICKNAME COM DESTAQUE, EMAIL PEQUENO EMBAIXO */}
                            <div style={{ fontWeight: 'bold' }}>
-                              {u.nickname || u.email} {u.role === 'super_admin' && '👑'}
+                             {u.nickname || u.email} {u.role === 'super_admin' && '👑'}
                            </div>
                            {u.nickname && <div style={{ fontSize: '10px', color: 'var(--texto-secundario)' }}>{u.email}</div>}
                         </div>
-                        {/* BOTÃO EDITAR NICKNAME */}
                         <button 
                           onClick={() => editarNickname(u.id, u.nickname)}
                           title="Editar Apelido"
@@ -344,8 +357,6 @@ function App() {
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          
-          {/* BOTÃO ONLINE */}
           {sessao && (
             <button 
               onClick={() => setMostrarListaOnline(!mostrarListaOnline)}
@@ -361,12 +372,10 @@ function App() {
             </button>
           )}
 
-          {/* SAUDAÇÃO COM NICKNAME */}
           {sessao?.user?.email && (
             <div style={{ textAlign: 'right', fontSize: '12px' }}>
               <span style={{ color: 'var(--texto-secundario)' }}>Olá, </span>
               <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>
-                {/* AQUI: Se tiver nickname, mostra ele. Senão, mostra email. */}
                 {meuPerfil?.nickname || sessao.user.email} 
                 {isSuperAdmin && '👑'}
               </span>
@@ -399,7 +408,20 @@ function App() {
           <>
             <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
-              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}><CorpoHumano aoSelecionar={setParteSelecionada} parteAtiva={parteSelecionada} vista={vista} /></div>
+              
+              {/* --- BONECO COM O NOVO CÉREBRO (MAPA) --- */}
+              <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
+                 <CorpoHumano 
+                   aoSelecionar={(info) => {
+                      // Se vier um objeto {id:..., label:...}, pegamos o ID. Se vier string, usamos direto.
+                      setParteSelecionada(info.id || info);
+                   }} 
+                   parteAtiva={parteSelecionada} 
+                   vista={vista}
+                   mapaDeNomes={mapaPartes} 
+                 />
+              </div>
+
             </section>
             
             <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
