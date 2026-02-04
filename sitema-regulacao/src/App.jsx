@@ -16,12 +16,10 @@ function App() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // DADOS DO BANCO
+  // DADOS DO BANCO & CÉREBRO (MAPA)
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
-  
-  // --- NOVO: MAPA DE NOMES (CÉREBRO DO BONECO) ---
-  const [mapaPartes, setMapaPartes] = useState({}); // Guarda { 'coxa-direita': { label: 'Coxa Direita', id: '...' } }
+  const [mapaPartes, setMapaPartes] = useState({}); // Dicionário de nomes
 
   // MODAL E NOTIFICAÇÕES
   const [modalAberto, setModalAberto] = useState(false);
@@ -39,12 +37,8 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);         
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
   const [meuPerfil, setMeuPerfil] = useState(null);
-  
-  // Lista de usuários online
   const [usuariosOnline, setUsuariosOnline] = useState([]);
   const [mostrarListaOnline, setMostrarListaOnline] = useState(false);
-  
-  // Modal de Gestão de Usuários (Super Admin)
   const [modalUsuariosAberto, setModalUsuariosAberto] = useState(false);
   const [listaUsuarios, setListaUsuarios] = useState([]);
 
@@ -77,16 +71,13 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- NOVO EFEITO: CARREGAR O MAPA DO CORPO ---
+  // --- CARREGA O MAPA DE NOMES (CÉREBRO) ---
   useEffect(() => {
     async function fetchBodyParts() {
-      // Busca ID e Nome Visual de todas as partes cadastradas
       const { data } = await supabase.from('body_parts').select('id, display_name');
-      
       if (data) {
         const mapa = {};
         data.forEach(part => {
-          // Cria um dicionário onde a CHAVE é o ID do SQL (ex: 'coxa-direita')
           mapa[part.id] = { label: part.display_name, id: part.id };
         });
         setMapaPartes(mapa);
@@ -95,7 +86,6 @@ function App() {
     fetchBodyParts();
   }, []);
 
-  // Busca dados do perfil (Role e Nickname)
   async function carregarPerfilUsuario(userId) {
     const { data } = await supabase.from('profiles').select('role, nickname').eq('id', userId).single();
     if (data) {
@@ -109,11 +99,7 @@ function App() {
   // --- ONLINE CHECKER ---
   useEffect(() => {
     if (!sessao?.user || !meuPerfil) return;
-
-    const channel = supabase.channel('sala-global', {
-      config: { presence: { key: sessao.user.id } },
-    });
-
+    const channel = supabase.channel('sala-global', { config: { presence: { key: sessao.user.id } } });
     channel
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
@@ -134,11 +120,10 @@ function App() {
           });
         }
       });
-
     return () => { supabase.removeChannel(channel); };
   }, [sessao, meuPerfil]);
 
-  // --- CARREGAMENTO DE DADOS ---
+  // --- CARREGAMENTO DE DADOS DA PARTE ---
   useEffect(() => {
     if (parteSelecionada) {
       setTermoBusca('');
@@ -160,6 +145,34 @@ function App() {
   }
 
   const protocolosVisiveis = subAreaSelecionada ? listaProtocolos.filter(p => p.sub_area_id === subAreaSelecionada) : []; 
+
+  // --- FUNÇÕES DE RENOMEAR (LIVE EDIT) ---
+  const renomearParte = async (novoNome) => {
+    if (!isAdmin || !parteSelecionada) return;
+    const { error } = await supabase.from('body_parts').update({ display_name: novoNome }).eq('id', parteSelecionada);
+    if (!error) {
+      setToast({ mensagem: 'Nome atualizado!', tipo: 'sucesso' });
+      // Atualiza o mapa localmente
+      setMapaPartes(prev => ({
+        ...prev,
+        [parteSelecionada]: { ...prev[parteSelecionada], label: novoNome }
+      }));
+    } else {
+      setToast({ mensagem: 'Erro ao renomear.', tipo: 'erro' });
+    }
+  };
+
+  const renomearSubArea = async (idSub, nomeAtual) => {
+    if (!isAdmin || !modoEdicao) return;
+    const novoNome = window.prompt("Novo nome para a categoria:", nomeAtual);
+    if (novoNome && novoNome !== nomeAtual) {
+      const { error } = await supabase.from('sub_areas').update({ name: novoNome }).eq('id', idSub);
+      if (!error) {
+        setToast({ mensagem: 'Categoria renomeada!', tipo: 'sucesso' });
+        carregarDadosDaParte(parteSelecionada);
+      }
+    }
+  };
 
   // --- BUSCA GLOBAL ---
   useEffect(() => {
@@ -186,7 +199,7 @@ function App() {
     setBuscando(false);
   }
 
-  // --- CRUD ---
+  // --- CRUD GERAL ---
   const abrirModalCriar = () => { 
     if (!parteSelecionada || !isAdmin) return;
     if (!subAreaSelecionada) { alert("⚠️ Crie uma sub-categoria antes."); return; }
@@ -255,9 +268,7 @@ function App() {
     const { error } = await supabase.from('profiles').update({ nickname: novoNick || null }).eq('id', idUsuario);
     if (!error) {
       setToast({ mensagem: 'Nickname atualizado!', tipo: 'sucesso' });
-      if (idUsuario === sessao.user.id) {
-         setMeuPerfil(prev => ({ ...prev, nickname: novoNick || null }));
-      }
+      if (idUsuario === sessao.user.id) setMeuPerfil(prev => ({ ...prev, nickname: novoNick || null }));
       const { data } = await supabase.from('profiles').select('*').order('email');
       setListaUsuarios(data || []);
     } else {
@@ -276,11 +287,8 @@ function App() {
       {/* LISTA ONLINE */}
       {mostrarListaOnline && (
         <div style={{
-          position: 'absolute', top: '70px', right: '100px',
-          width: '250px', backgroundColor: 'var(--bg-card)', 
-          border: '1px solid var(--destaque)', borderRadius: '8px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)', zIndex: 3000,
-          padding: '10px'
+          position: 'absolute', top: '70px', right: '100px', width: '250px', backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--destaque)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', zIndex: 3000, padding: '10px'
         }}>
           <div style={{fontSize:'12px', fontWeight:'bold', color:'var(--texto-secundario)', marginBottom:'8px', display:'flex', justifyContent:'space-between'}}>
             <span>USUÁRIOS ONLINE ({usuariosOnline.length})</span>
@@ -315,18 +323,10 @@ function App() {
                     <td style={{ padding: '10px', fontSize:'14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div>
-                           <div style={{ fontWeight: 'bold' }}>
-                             {u.nickname || u.email} {u.role === 'super_admin' && '👑'}
-                           </div>
+                           <div style={{ fontWeight: 'bold' }}>{u.nickname || u.email} {u.role === 'super_admin' && '👑'}</div>
                            {u.nickname && <div style={{ fontSize: '10px', color: 'var(--texto-secundario)' }}>{u.email}</div>}
                         </div>
-                        <button 
-                          onClick={() => editarNickname(u.id, u.nickname)}
-                          title="Editar Apelido"
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}
-                        >
-                          ✏️
-                        </button>
+                        <button onClick={() => editarNickname(u.id, u.nickname)} title="Editar Apelido" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
                       </div>
                     </td>
                     <td style={{ padding: '10px' }}><span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(128, 128, 128, 0.1)', color: u.role === 'admin' || u.role === 'super_admin' ? 'var(--destaque)' : 'var(--texto-secundario)' }}>{u.role ? u.role.toUpperCase() : 'USER'}</span></td>
@@ -344,7 +344,7 @@ function App() {
         </div>
       )}
 
-      {/* HEADER */}
+      {/* HEADER PRINCIPAL */}
       <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--borda)', flexShrink: 0 }}>
         <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--destaque)' }}>SISREG<span style={{ fontSize: '10px', opacity: 0.7 }}>PRO</span></div>
         
@@ -358,15 +358,7 @@ function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {sessao && (
-            <button 
-              onClick={() => setMostrarListaOnline(!mostrarListaOnline)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '6px 12px', borderRadius: '20px', 
-                border: '1px solid #00e676', backgroundColor: 'rgba(0, 230, 118, 0.1)',
-                cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: '#00e676'
-              }}
-            >
+            <button onClick={() => setMostrarListaOnline(!mostrarListaOnline)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', border: '1px solid #00e676', backgroundColor: 'rgba(0, 230, 118, 0.1)', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: '#00e676' }}>
               <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#00e676', boxShadow:'0 0 5px #00e676'}}></div>
               {usuariosOnline.length} ON
             </button>
@@ -375,10 +367,7 @@ function App() {
           {sessao?.user?.email && (
             <div style={{ textAlign: 'right', fontSize: '12px' }}>
               <span style={{ color: 'var(--texto-secundario)' }}>Olá, </span>
-              <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>
-                {meuPerfil?.nickname || sessao.user.email} 
-                {isSuperAdmin && '👑'}
-              </span>
+              <span style={{ color: isSuperAdmin ? '#FFD700' : 'var(--destaque)', fontWeight: 'bold' }}>{meuPerfil?.nickname || sessao.user.email} {isSuperAdmin && '👑'}</span>
             </div>
           )}
 
@@ -395,7 +384,7 @@ function App() {
         </div>
       </header>
 
-      {/* CONTEÚDO */}
+      {/* CONTEÚDO PRINCIPAL */}
       <main style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         {!sessao ? (
           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-pagina)', color: 'var(--texto-primario)', textAlign: 'center', padding: '20px' }}>
@@ -406,24 +395,20 @@ function App() {
           </div>
         ) : (
           <>
+            {/* PAINEL ESQUERDO: BONECO */}
             <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
-              
-              {/* --- BONECO COM O NOVO CÉREBRO (MAPA) --- */}
               <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
                  <CorpoHumano 
-                   aoSelecionar={(info) => {
-                      // Se vier um objeto {id:..., label:...}, pegamos o ID. Se vier string, usamos direto.
-                      setParteSelecionada(info.id || info);
-                   }} 
+                   aoSelecionar={(info) => setParteSelecionada(info.id || info)} 
                    parteAtiva={parteSelecionada} 
                    vista={vista}
                    mapaDeNomes={mapaPartes} 
                  />
               </div>
-
             </section>
             
+            {/* PAINEL DIREITO: CONTEÚDO */}
             <section style={{ flex: 1.3, padding: '30px', backgroundColor: 'var(--bg-card)', overflowY: 'auto' }}>
               {termoBusca.length > 0 ? (
                 <div style={{ animation: 'fadeIn 0.3s' }}>
@@ -436,13 +421,30 @@ function App() {
               ) : (
                 parteSelecionada ? (
                   <div style={{ animation: 'fadeIn 0.3s' }}>
-                    <HeaderSecao parteSelecionada={parteSelecionada} isAdmin={isAdmin} modoEdicao={modoEdicao} aoAbrirModalProtocolo={abrirModalCriar} aoAtualizar={() => carregarDadosDaParte(parteSelecionada)} />
+                    
+                    {/* HEADER SEÇÃO COM RENAME */}
+                    <HeaderSecao 
+                      parteSelecionada={parteSelecionada}
+                      nomeAtual={mapaPartes[parteSelecionada]?.label || parteSelecionada} 
+                      isAdmin={isAdmin} 
+                      modoEdicao={modoEdicao} 
+                      aoAbrirModalProtocolo={abrirModalCriar} 
+                      aoAtualizar={() => carregarDadosDaParte(parteSelecionada)}
+                      onRename={renomearParte} 
+                    />
+
+                    {/* SUB-MENUS */}
                     {subMenus.length > 0 ? (
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
                         {subMenus.map(sub => (
                           <div key={sub.id} style={{ position: 'relative' }}>
                             <button onClick={() => setSubAreaSelecionada(sub.id)} style={{ padding: '6px 12px', borderRadius: '15px', border: '1px solid var(--destaque)', cursor: 'pointer', fontSize: '13px', background: subAreaSelecionada === sub.id ? 'var(--destaque)' : 'transparent', color: subAreaSelecionada === sub.id ? '#fff' : 'var(--destaque)' }}>{sub.name}</button>
-                            {modoEdicao && isAdmin && <button onClick={(e) => { e.stopPropagation(); apagarSubMenu(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '-8px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ff5252', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }}>X</button>}
+                            {modoEdicao && isAdmin && (
+                              <>
+                                <button onClick={(e) => { e.stopPropagation(); apagarSubMenu(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '-8px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ff5252', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }}>X</button>
+                                <button onClick={(e) => { e.stopPropagation(); renomearSubArea(sub.id, sub.name); }} style={{ position: 'absolute', top: '-8px', right: '15px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#2196F3', color: 'white', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 5 }} title="Renomear">✎</button>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
