@@ -2,13 +2,13 @@ import React from 'react';
 
 const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
 
-  // --- CORES (Mantendo a lógica visual, mas com formas simples) ---
+  // --- ESTILO: Clean e Arredondado ---
   const colors = {
-    fill: 'transparent',      // Fundo transparente (ou branco se preferir)
-    stroke: '#cbd5e1',        // Cinza claro para o contorno (Slate-300)
-    strokeHover: '#94a3b8',   // Cinza mais escuro no hover
-    fillSelected: '#3b82f6',  // Azul preenchido quando selecionado
-    strokeSelected: '#1d4ed8' // Borda azul escura
+    fill: '#f8fafc',          // Fundo quase branco (Slate-50)
+    stroke: '#64748b',        // Borda Cinza (Slate-500)
+    fillSelected: '#3b82f6',  // Azul (Blue-500)
+    strokeSelected: '#1d4ed8',// Azul Escuro
+    hoverFill: '#e2e8f0'      // Hover suave
   };
 
   const getStyle = (id) => {
@@ -16,45 +16,43 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
     return {
       fill: isSelected ? colors.fillSelected : colors.fill,
       stroke: isSelected ? colors.strokeSelected : colors.stroke,
-      strokeWidth: isSelected ? '3' : '2',
+      strokeWidth: isSelected ? '2.5' : '2',
       cursor: 'pointer',
-      transition: 'all 0.2s',
-      vectorEffect: 'non-scaling-stroke' // Garante linhas nítidas no zoom
+      transition: 'all 0.2s ease',
+      rx: '10', // ARREDONDAMENTO PADRÃO DOS CANTOS
+      ry: '10'
     };
   };
 
-  // Componente Helper para polígonos (Formas Retas)
-  const Part = ({ id, points }) => (
-    <polygon
+  // Componente para criar os "blocos" do corpo (Retângulos Arredondados)
+  const Part = ({ id, x, y, width, height, customRx }) => (
+    <rect
       id={id}
-      points={points}
+      x={x} y={y} width={width} height={height}
+      rx={customRx || 8} // Cantos arredondados
+      ry={customRx || 8}
       style={getStyle(id)}
       onClick={(e) => {
         e.stopPropagation();
         if (aoSelecionar) aoSelecionar(id);
       }}
       onMouseEnter={(e) => {
-        if (parteAtiva !== id) e.target.style.stroke = colors.strokeHover;
-        if (parteAtiva !== id) e.target.style.strokeWidth = '3';
+        if (parteAtiva !== id) e.target.style.fill = colors.hoverFill;
       }}
       onMouseLeave={(e) => {
-        if (parteAtiva !== id) e.target.style.stroke = colors.stroke;
-        if (parteAtiva !== id) e.target.style.strokeWidth = '2';
-        else e.target.style.stroke = colors.strokeSelected;
+        if (parteAtiva !== id) e.target.style.fill = colors.fill;
+        else e.target.style.fill = colors.fillSelected;
       }}
     />
   );
 
-  // Helper para Círculo (Cabeça)
-  const Head = ({ id, cx, cy, r }) => (
+  // Cabeça (Círculo)
+  const Head = ({ id }) => (
     <circle
       id={id}
-      cx={cx} cy={cy} r={r}
-      style={getStyle(id)}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (aoSelecionar) aoSelecionar(id);
-      }}
+      cx="150" cy="50" r="35"
+      style={{...getStyle(id), rx: undefined, ry: undefined}} // Remove rx/ry do style pois é circle
+      onClick={(e) => { e.stopPropagation(); if (aoSelecionar) aoSelecionar(id); }}
     />
   );
 
@@ -67,59 +65,61 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
       >
         {vista === 'frente' ? (
           <g>
-            {/* CABEÇA */}
-            <Head id="cabeca" cx="150" cy="50" r="30" />
+            <Head id="cabeca" />
             
-            {/* PESCOÇO (Retângulo simples) */}
-            <Part id="pescoco" points="135,80 165,80 165,95 135,95" />
+            {/* PESCOÇO */}
+            <Part id="pescoco" x="135" y="90" width="30" height="20" customRx={5} />
 
-            {/* TRONCO (Trapézios Geométricos) */}
-            <Part id="torax" points="110,95 190,95 180,170 120,170" />
-            <Part id="abdomen" points="120,175 180,175 175,230 125,230" />
-            <Part id="pelvis" points="125,235 175,235 190,280 110,280" />
+            {/* TRONCO (Dividido em blocos arredondados) */}
+            <Part id="torax" x="110" y="115" width="80" height="70" customRx={15} />
+            <Part id="abdomen" x="115" y="190" width="70" height="60" />
+            <Part id="pelvis" x="115" y="255" width="70" height="40" />
 
-            {/* BRAÇO ESQUERDO (Segmentado Reto) */}
-            <Part id="ombro-esq" points="195,100 230,120 220,150 185,130" />
-            <Part id="braco-esq" points="222,155 240,210 215,220 198,165" />
-            <Part id="antebra-esq" points="242,215 260,270 235,280 218,225" />
+            {/* BRAÇOS (Cápsulas) */}
+            {/* Esquerdo */}
+            <Part id="ombro-esq" x="200" y="120" width="30" height="40" />
+            <Part id="braco-esq" x="205" y="165" width="25" height="60" />
+            <Part id="antebra-esq" x="205" y="230" width="25" height="60" />
+            
+            {/* Direito */}
+            <Part id="ombro-dir" x="70" y="120" width="30" height="40" />
+            <Part id="braco-dir" x="70" y="165" width="25" height="60" />
+            <Part id="antebra-dir" x="70" y="230" width="25" height="60" />
 
-            {/* BRAÇO DIREITO (Segmentado Reto) */}
-            <Part id="ombro-dir" points="105,100 70,120 80,150 115,130" />
-            <Part id="braco-dir" points="78,155 60,210 85,220 102,165" />
-            <Part id="antebra-dir" points="58,215 40,270 65,280 82,225" />
+            {/* PERNAS (Cápsulas Longas) */}
+            {/* Esquerda */}
+            <Part id="coxa-esq" x="155" y="300" width="35" height="90" />
+            <Part id="canela-esq" x="155" y="395" width="35" height="90" />
+            <Part id="pe-esq" x="155" y="490" width="45" height="20" customRx={5} />
 
-            {/* PERNAS (Retângulos) */}
-            <Part id="coxa-esq" points="155,285 185,285 180,380 150,380" />
-            <Part id="canela-esq" points="152,385 178,385 175,480 155,480" />
-            <Part id="pe-esq" points="155,480 185,480 195,500 150,500" />
-
-            <Part id="coxa-dir" points="115,285 145,285 150,380 120,380" />
-            <Part id="canela-dir" points="122,385 148,385 145,480 125,480" />
-            <Part id="pe-dir" points="115,480 145,480 150,500 105,500" />
+            {/* Direita */}
+            <Part id="coxa-dir" x="110" y="300" width="35" height="90" />
+            <Part id="canela-dir" x="110" y="395" width="35" height="90" />
+            <Part id="pe-dir" x="100" y="490" width="45" height="20" customRx={5} />
           </g>
         ) : (
           <g>
-            {/* COSTAS - Mesma geometria, só mudando IDs para salvar correto no banco */}
-            <Head id="cabeca-costas" cx="150" cy="50" r="30" />
-            <Part id="pescoco-costas" points="135,80 165,80 165,95 135,95" />
-            
-            {/* Coluna Vertebral Simbolizada */}
-            <Part id="costas-sup" points="110,95 190,95 180,170 120,170" />
-            <Part id="lombar" points="120,175 180,175 175,230 125,230" />
-            <Part id="gluteos" points="125,235 175,235 190,280 110,280" />
+            {/* COSTAS - Mesma estrutura visual, IDs de costas */}
+            <Head id="cabeca-costas" />
+            <Part id="pescoco-costas" x="135" y="90" width="30" height="20" customRx={5} />
+
+            {/* Coluna/Costas */}
+            <Part id="costas-sup" x="110" y="115" width="80" height="70" customRx={15} />
+            <Part id="lombar" x="115" y="190" width="70" height="60" />
+            <Part id="gluteos" x="115" y="255" width="70" height="40" />
 
             {/* Membros Costas */}
-            <Part id="ombro-esq-costas" points="195,100 230,120 220,150 185,130" />
-            <Part id="braco-esq-costas" points="222,155 240,210 215,220 198,165" />
+            <Part id="ombro-esq-costas" x="200" y="120" width="30" height="40" />
+            <Part id="braco-esq-costas" x="205" y="165" width="25" height="60" />
             
-            <Part id="ombro-dir-costas" points="105,100 70,120 80,150 115,130" />
-            <Part id="braco-dir-costas" points="78,155 60,210 85,220 102,165" />
+            <Part id="ombro-dir-costas" x="70" y="120" width="30" height="40" />
+            <Part id="braco-dir-costas" x="70" y="165" width="25" height="60" />
 
-            <Part id="coxa-esq-costas" points="155,285 185,285 180,380 150,380" />
-            <Part id="canela-esq-costas" points="152,385 178,385 175,480 155,480" />
+            <Part id="coxa-esq-costas" x="155" y="300" width="35" height="90" />
+            <Part id="canela-esq-costas" x="155" y="395" width="35" height="90" />
             
-            <Part id="coxa-dir-costas" points="115,285 145,285 150,380 120,380" />
-            <Part id="canela-dir-costas" points="122,385 148,385 145,480 125,480" />
+            <Part id="coxa-dir-costas" x="110" y="300" width="35" height="90" />
+            <Part id="canela-dir-costas" x="110" y="395" width="35" height="90" />
           </g>
         )}
       </svg>
