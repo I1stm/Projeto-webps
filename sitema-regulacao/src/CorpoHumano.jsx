@@ -2,29 +2,29 @@ import React from 'react';
 
 const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
 
-  // --- CORES & ESTILO ---
+  // --- ESTILO: Geométrico e Reto ---
   const colors = {
-    fill: '#f1f5f9',          // Slate-100 (Fundo suave)
-    stroke: '#94a3b8',        // Slate-400 (Contorno neutro)
-    fillSelected: '#3b82f6',  // Blue-500 (Selecionado)
-    strokeSelected: '#1d4ed8',// Blue-700 (Borda forte)
-    hover: '#cbd5e1'          // Slate-300 (Hover)
+    fill: '#f1f5f9',          // Fundo claro
+    stroke: '#64748b',        // Linhas cinza chumbo
+    fillSelected: '#3b82f6',  // Azul preenchimento
+    strokeSelected: '#1d4ed8',// Azul borda forte
+    hover: '#cbd5e1'          // Hover
   };
 
-  // Função que decide a cor baseada no ID selecionado
   const getStyle = (targetId) => {
     const isSelected = parteAtiva === targetId;
     return {
       fill: isSelected ? colors.fillSelected : colors.fill,
       stroke: isSelected ? colors.strokeSelected : colors.stroke,
-      strokeWidth: '2',
+      strokeWidth: isSelected ? '2.5' : '2', // Borda um pouco mais grossa para destacar as retas
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       vectorEffect: 'non-scaling-stroke',
+      strokeLinejoin: 'miter', // Cantos vivos (retos)
     };
   };
 
-  // Componente auxiliar
+  // Mantemos o componente auxiliar inteligente
   const BodyPart = ({ sqlId, d }) => (
     <path
       d={d}
@@ -52,55 +52,71 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
       >
         {vista === 'frente' ? (
           <g transform="translate(0, 20)">
-            {/* --- FRENTE --- */}
-            <BodyPart sqlId="cabeca" d="M150,20 C130,20 125,45 125,75 C125,105 135,120 150,120 C165,120 175,105 175,75 C175,45 170,20 150,20 Z" />
-            <BodyPart sqlId="pescoco" d="M135,115 L165,115 L165,135 Q150,140 135,135 Z" />
-            <BodyPart sqlId="peito" d="M125,140 Q150,145 175,140 L180,200 Q150,210 120,200 Z" />
-            <BodyPart sqlId="abdomen" d="M120,205 Q150,215 180,205 L175,260 Q150,270 125,260 Z" />
-            <BodyPart sqlId="pelvis" d="M125,265 Q150,275 175,265 L185,300 L115,300 L125,265 Z" />
-            {/* Braços */}
-            <BodyPart sqlId="ombro-esquerdo" d="M180,140 L210,150 L200,180 L178,170 Z" />
-            <BodyPart sqlId="braco-esquerdo" d="M212,155 L220,200 L200,205 L195,160 Z" />
-            <BodyPart sqlId="braco-esquerdo" d="M220,205 L225,260 L205,265 L200,210 Z" />
-            <BodyPart sqlId="mao-esquerda" d="M225,265 L235,300 L210,305 L205,270 Z" />
-            <BodyPart sqlId="ombro-direito" d="M120,140 L90,150 L100,180 L122,170 Z" />
-            <BodyPart sqlId="braco-direito" d="M88,155 L80,200 L100,205 L105,160 Z" />
-            <BodyPart sqlId="braco-direito" d="M80,205 L75,260 L95,265 L100,210 Z" />
-            <BodyPart sqlId="mao-direita" d="M75,265 L65,300 L90,305 L95,270 Z" />
-            {/* Pernas */}
-            <BodyPart sqlId="perna-esquerda" d="M155,305 L180,305 L175,400 L150,400 Z" />
-            <BodyPart sqlId="perna-esquerda" d="M152,405 L173,405 L170,500 L155,500 Z" />
-            <BodyPart sqlId="pe-esquerdo" d="M155,505 L170,505 L180,530 L150,530 Z" />
-            <BodyPart sqlId="perna-direita" d="M145,305 L120,305 L125,400 L150,400 Z" />
-            <BodyPart sqlId="perna-direita" d="M148,405 L127,405 L130,500 L145,500 Z" />
-            <BodyPart sqlId="pe-direito" d="M145,505 L130,505 L120,530 L150,530 Z" />
+            {/* --- FRENTE RETO --- */}
+            
+            {/* Cabeça (Octógono simples) e Pescoço */}
+            <BodyPart sqlId="cabeca" d="M130,30 L170,30 L180,50 L180,90 L170,110 L130,110 L120,90 L120,50 Z" />
+            <BodyPart sqlId="pescoco" d="M135,110 L165,110 L165,130 L135,130 Z" />
+
+            {/* Tronco (Trapézios Retos) */}
+            <BodyPart sqlId="peito" d="M120,130 L180,130 L170,190 L130,190 Z" />
+            <BodyPart sqlId="abdomen" d="M130,190 L170,190 L170,250 L130,250 Z" />
+            <BodyPart sqlId="pelvis" d="M130,250 L170,250 L185,290 L115,290 Z" />
+
+            {/* Braço Esquerdo (Segmentos Retos) */}
+            <BodyPart sqlId="ombro-esquerdo" d="M180,130 L220,145 L210,175 L170,160 Z" />
+            <BodyPart sqlId="braco-esquerdo" d="M210,175 L230,230 L210,235 L190,180 Z" /> {/* Bíceps */}
+            <BodyPart sqlId="braco-esquerdo" d="M210,235 L220,290 L200,295 L190,240 Z" /> {/* Antebraço */}
+            <BodyPart sqlId="mao-esquerda" d="M200,295 L210,325 L190,330 L180,300 Z" />
+
+            {/* Braço Direito (Segmentos Retos) */}
+            <BodyPart sqlId="ombro-direito" d="M120,130 L80,145 L90,175 L130,160 Z" />
+            <BodyPart sqlId="braco-direito" d="M90,175 L70,230 L90,235 L110,180 Z" /> {/* Bíceps */}
+            <BodyPart sqlId="braco-direito" d="M90,235 L80,290 L100,295 L110,240 Z" /> {/* Antebraço */}
+            <BodyPart sqlId="mao-direita" d="M100,295 L90,325 L110,330 L120,300 Z" />
+
+            {/* Perna Esquerda (Retas) */}
+            <BodyPart sqlId="perna-esquerda" d="M155,290 L185,290 L175,390 L145,390 Z" /> {/* Coxa */}
+            <BodyPart sqlId="perna-esquerda" d="M145,390 L175,390 L165,490 L135,490 Z" /> {/* Canela */}
+            <BodyPart sqlId="pe-esquerdo" d="M135,490 L165,490 L175,515 L130,515 Z" />
+
+            {/* Perna Direita (Retas) */}
+            <BodyPart sqlId="perna-direita" d="M145,290 L115,290 L125,390 L155,390 Z" /> {/* Coxa */}
+            <BodyPart sqlId="perna-direita" d="M155,390 L125,390 L135,490 L165,490 Z" /> {/* Canela */}
+            <BodyPart sqlId="pe-direito" d="M165,490 L135,490 L125,515 L170,515 Z" />
           </g>
         ) : (
           <g transform="translate(0, 20)">
-            {/* --- COSTAS --- */}
-            <BodyPart sqlId="cabeca" d="M150,20 C130,20 125,45 125,75 C125,105 135,120 150,120 C165,120 175,105 175,75 C175,45 170,20 150,20 Z" />
-            <BodyPart sqlId="pescoco" d="M135,115 L165,115 L165,135 Q150,140 135,135 Z" />
-            {/* Coluna */}
-            <BodyPart sqlId="coluna-cervical" d="M140,135 L160,135 L160,165 L140,165 Z" />
-            <BodyPart sqlId="coluna-toracica" d="M140,168 L160,168 L160,230 L140,230 Z" />
-            <BodyPart sqlId="coluna-lombar" d="M140,233 L160,233 L160,270 L140,270 Z" />
-            {/* Ombros/Costas */}
-            <BodyPart sqlId="ombro-esquerdo" d="M162,135 L210,150 L200,230 L162,230 Z" />
-            <BodyPart sqlId="ombro-direito" d="M138,135 L90,150 L100,230 L138,230 Z" />
-            <BodyPart sqlId="gluteos" d="M120,275 L180,275 L185,320 L115,320 Z" />
-            {/* Membros Costas */}
-            <BodyPart sqlId="braco-esquerdo" d="M212,155 L220,200 L200,205 L195,160 Z" />
-            <BodyPart sqlId="braco-esquerdo" d="M220,205 L225,260 L205,265 L200,210 Z" />
-            <BodyPart sqlId="mao-esquerda" d="M225,265 L235,300 L210,305 L205,270 Z" />
-            <BodyPart sqlId="braco-direito" d="M88,155 L80,200 L100,205 L105,160 Z" />
-            <BodyPart sqlId="braco-direito" d="M80,205 L75,260 L95,265 L100,210 Z" />
-            <BodyPart sqlId="mao-direita" d="M75,265 L65,300 L90,305 L95,270 Z" />
-            <BodyPart sqlId="perna-esquerda" d="M155,325 L180,325 L175,400 L150,400 Z" />
-            <BodyPart sqlId="perna-esquerda" d="M152,405 L173,405 L170,500 L155,500 Z" />
-            <BodyPart sqlId="pe-esquerdo" d="M155,505 L170,505 L180,530 L150,530 Z" />
-            <BodyPart sqlId="perna-direita" d="M145,325 L120,325 L125,400 L150,400 Z" />
-            <BodyPart sqlId="perna-direita" d="M148,405 L127,405 L130,500 L145,500 Z" />
-            <BodyPart sqlId="pe-direito" d="M145,505 L130,505 L120,530 L150,530 Z" />
+            {/* --- COSTAS RETO --- */}
+            <BodyPart sqlId="cabeca" d="M130,30 L170,30 L180,50 L180,90 L170,110 L130,110 L120,90 L120,50 Z" />
+            <BodyPart sqlId="pescoco" d="M135,110 L165,110 L165,130 L135,130 Z" />
+
+            {/* Coluna Reta */}
+            <BodyPart sqlId="coluna-cervical" d="M140,130 L160,130 L160,160 L140,160 Z" />
+            <BodyPart sqlId="coluna-toracica" d="M140,160 L160,160 L160,220 L140,220 Z" />
+            <BodyPart sqlId="coluna-lombar" d="M140,220 L160,220 L160,260 L140,260 Z" />
+
+            {/* Ombros/Costas Fundo */}
+            <BodyPart sqlId="ombro-esquerdo" d="M160,130 L220,145 L210,220 L160,220 Z" />
+            <BodyPart sqlId="ombro-direito" d="M140,130 L80,145 L90,220 L140,220 Z" />
+            <BodyPart sqlId="gluteos" d="M120,260 L180,260 L185,310 L115,310 Z" />
+
+            {/* Membros Costas (Mesma geometria da frente) */}
+            <BodyPart sqlId="braco-esquerdo" d="M210,175 L230,230 L210,235 L190,180 Z" />
+            <BodyPart sqlId="braco-esquerdo" d="M210,235 L220,290 L200,295 L190,240 Z" />
+            <BodyPart sqlId="mao-esquerda" d="M200,295 L210,325 L190,330 L180,300 Z" />
+
+            <BodyPart sqlId="braco-direito" d="M90,175 L70,230 L90,235 L110,180 Z" />
+            <BodyPart sqlId="braco-direito" d="M90,235 L80,290 L100,295 L110,240 Z" />
+            <BodyPart sqlId="mao-direita" d="M100,295 L90,325 L110,330 L120,300 Z" />
+
+            <BodyPart sqlId="perna-esquerda" d="M155,310 L185,310 L175,410 L145,410 Z" />
+            <BodyPart sqlId="perna-esquerda" d="M145,410 L175,410 L165,510 L135,510 Z" />
+            <BodyPart sqlId="pe-esquerdo" d="M135,510 L165,510 L175,535 L130,535 Z" />
+
+            <BodyPart sqlId="perna-direita" d="M145,310 L115,310 L125,410 L155,410 Z" />
+            <BodyPart sqlId="perna-direita" d="M155,410 L125,410 L135,510 L165,510 Z" />
+            <BodyPart sqlId="pe-direito" d="M165,510 L135,510 L125,535 L170,535 Z" />
           </g>
         )}
       </svg>
