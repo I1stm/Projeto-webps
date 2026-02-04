@@ -25,7 +25,6 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
   };
 
   // --- A MÁGICA DA TRADUÇÃO ---
-  // Quando clica, ele olha no mapa se esse ID tem um nome especial no banco
   const resolverAcao = (e, sqlIdOriginal) => {
     e.stopPropagation();
     
@@ -53,7 +52,6 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
         else e.target.style.fill = colors.fillSelected;
       }}
     >
-      {/* Mostra o nome real do banco quando para o mouse em cima */}
       <title>{getNomeLegivel(sqlId)}</title>
     </rect>
   );
@@ -83,68 +81,86 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
       >
         {vista === 'frente' ? (
           <g transform="translate(0, 20)">
-            {/* --- FRENTE --- */}
+            {/* =================================================== */}
+            {/* VISÃO FRONTAL (Anatomicamente Padrão)               */}
+            {/* Esquerda do Paciente = Direita da Tela              */}
+            {/* =================================================== */}
             
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
+            {/* TRONCO FRENTE */}
             <Block sqlId="peito" x="110" y="115" w="80" h="65" />
             <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
             <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
 
-            {/* MEMBROS ESQUERDOS */}
+            {/* MEMBROS SUPERIORES (FRENTE) */}
+            {/* Lado Esquerdo do Paciente (Direita da Tela) */}
             <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
             <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
             <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
 
-            {/* MEMBROS DIREITOS */}
+            {/* Lado Direito do Paciente (Esquerda da Tela) */}
             <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
             <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
             <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
 
-            {/* PERNAS FRENTE */}
+            {/* MEMBROS INFERIORES (FRENTE) */}
+            {/* Perna Esquerda do Paciente (Direita da Tela) */}
             <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
             <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
 
+            {/* Perna Direita do Paciente (Esquerda da Tela) */}
             <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
             <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
             <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
           </g>
         ) : (
           <g transform="translate(0, 20)">
-            {/* --- COSTAS --- */}
+            {/* =================================================== */}
+            {/* VISÃO COSTAS (Inversão Anatômica)                   */}
+            {/* Esquerda do Paciente = Esquerda da Tela             */}
+            {/* =================================================== */}
+
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
+            {/* COLUNA VERTEBRAL (Substitui Peito/Abdomen) */}
             <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
             <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
             <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
 
-            {/* OMBROS (Ajustados para preencher costas) */}
-            <Block sqlId="ombro-esquerdo" x="170" y="115" w="65" h="40" /> 
-            <Block sqlId="ombro-direito" x="65" y="115" w="65" h="40" />
+            {/* OMBROS COSTAS */}
+            {/* Aqui INVERTEMOS: O que está na Direita da Tela (x=170) agora é o ombro DIREITO */}
+            <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" /> 
+            <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" />
+            
             <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
 
-            {/* MEMBROS COSTAS */}
-            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
-            <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" />
+            {/* MEMBROS SUPERIORES (COSTAS) */}
+            {/* Lado Direito da Tela -> Braço Direito do Paciente */}
+            <Block sqlId="biceps-direito" x="205" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-direito" x="205" y="220" w="25" h="55" />
+            <Round sqlId="mao-direita" cx="217" cy="295" r="15" />
 
-            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
-            <Round sqlId="mao-direita" cx="82" cy="295" r="15" />
+            {/* Lado Esquerdo da Tela -> Braço Esquerdo do Paciente */}
+            <Block sqlId="biceps-esquerdo" x="70" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-esquerdo" x="70" y="220" w="25" h="55" />
+            <Round sqlId="mao-esquerda" cx="82" cy="295" r="15" />
 
-            {/* PERNAS COSTAS */}
-            <Block sqlId="coxa-esquerda" x="155" y="305" w="35" h="90" />
-            <Block sqlId="canela-esquerda" x="155" y="400" w="35" h="90" />
-            <Block sqlId="pe-esquerdo" x="155" y="495" w="35" h="20" radius={4} />
+            {/* MEMBROS INFERIORES (COSTAS) */}
+            {/* Lado Direito da Tela -> Perna Direita do Paciente */}
+            <Block sqlId="coxa-direita" x="155" y="305" w="35" h="90" />
+            <Block sqlId="canela-direita" x="155" y="400" w="35" h="90" />
+            <Block sqlId="pe-direito" x="155" y="495" w="35" h="20" radius={4} />
 
-            <Block sqlId="coxa-direita" x="110" y="305" w="35" h="90" />
-            <Block sqlId="canela-direita" x="110" y="400" w="35" h="90" />
-            <Block sqlId="pe-direito" x="110" y="495" w="35" h="20" radius={4} />
+            {/* Lado Esquerdo da Tela -> Perna Esquerda do Paciente */}
+            <Block sqlId="coxa-esquerda" x="110" y="305" w="35" h="90" />
+            <Block sqlId="canela-esquerda" x="110" y="400" w="35" h="90" />
+            <Block sqlId="pe-esquerdo" x="110" y="495" w="35" h="20" radius={4} />
           </g>
         )}
       </svg>
