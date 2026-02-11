@@ -103,9 +103,9 @@ function App() {
     }
   }
 
-// --- ONLINE CHECKER (Versão Robusta) ---
+// --- ONLINE CHECKER (Versão Robusta / Fail-safe) ---
   useEffect(() => {
-    // Se não tem sessão, nem tenta conectar
+    // Se não tem usuário logado, não faz sentido conectar
     if (!sessao?.user) return;
 
     const channel = supabase.channel('sala-global', { config: { presence: { key: sessao.user.id } } });
@@ -114,19 +114,22 @@ function App() {
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
         const listaTemporaria = [];
+        
+        // Converte o objeto estranho do Supabase em uma lista limpa
         for (let key in newState) {
           const usuario = newState[key][0];
           if (usuario) listaTemporaria.push(usuario);
         }
-        // Remove duplicados
+        
+        // Remove duplicados (caso a mesma pessoa abra 2 abas)
         const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
         setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // AQUI ESTAVA O PROBLEMA: Se meuPerfil fosse null, ele não enviava nada.
-          // Agora usamos um "ou" (||) para garantir que envie pelo menos o email.
-          const apelido = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Anônimo';
+          // A MÁGICA ESTÁ AQUI:
+          // Tenta pegar o Nickname. Se falhar, pega a primeira parte do email.
+          const apelido = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Visitante';
           
           await channel.track({
             userId: sessao.user.id,
@@ -137,7 +140,7 @@ function App() {
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [sessao, meuPerfil]); // Mantemos a dependência para atualizar se o perfil carregar depois
+  }, [sessao, meuPerfil]); // Recarrega se o perfil mudar
 
   // --- CARREGAMENTO DE DADOS DA PARTE ---
   useEffect(() => {
