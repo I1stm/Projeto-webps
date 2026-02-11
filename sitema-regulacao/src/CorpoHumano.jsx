@@ -5,12 +5,12 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
   // --- CORES ---
   const colors = {
     // Camada da Frente (Normal)
-    fill: '#f8fafc',          
-    stroke: '#64748b',        
-    fillSelected: '#3b82f6',  
+    fill: '#f8fafc',
+    stroke: '#64748b',
+    fillSelected: '#3b82f6',
     strokeSelected: '#1d4ed8',
     hover: '#e2e8f0',
-    
+
     // Camada de Trás (Pele/Geral) - Tom pêssego/pele
     skinBase: '#ffccbc',      // Cor normal da "aura" de pele
     skinSelected: '#ff7043',  // Cor quando a pele geral está selecionada
@@ -25,7 +25,7 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
   const handleAction = (e, sqlId, isSkinLayer) => {
     e.stopPropagation();
     const targetId = isSkinLayer ? 'pele-geral' : sqlId;
-    
+
     const valorFinal = mapaDeNomes[targetId] ? mapaDeNomes[targetId] : targetId;
     if (aoSelecionar) aoSelecionar(valorFinal);
   };
@@ -36,7 +36,7 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
     if (isSkinLayer) {
       const isSkinActive = parteAtiva === 'pele-geral' || (parteAtiva && parteAtiva.id === 'pele-geral');
       const color = isSkinActive ? colors.skinSelected : colors.skinBase;
-      
+
       return {
         fill: color,           // Preenchimento sólido
         stroke: color,         // Borda da MESMA cor
@@ -63,7 +63,7 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
 
 
   // --- COMPONENTES DE FORMA (Reutilizáveis para as duas camadas) ---
-  
+
   const Block = ({ sqlId, x, y, w, h, radius = 6, isSkinLayer = false }) => (
     <rect
       x={x} y={y} width={w} height={h} rx={radius} ry={radius}
@@ -97,26 +97,26 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
 
       {vista === 'frente' ? (
         <>
-           {/* TRONCO FRENTE */}
-           <Block sqlId="peito" x="110" y="115" w="80" h="65" isSkinLayer={isSkinLayer} />
-           <Block sqlId="abdomen" x="115" y="185" w="70" h="60" isSkinLayer={isSkinLayer} />
-           <Block sqlId="pelvis" x="115" y="250" w="70" h="40" isSkinLayer={isSkinLayer} />
-           {/* BRAÇOS FRENTE */}
-           <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
-           <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
-           <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
-           <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" isSkinLayer={isSkinLayer} /> 
-           <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
-           <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
-           <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
-           <Round sqlId="mao-direita" cx="82" cy="295" r="15" isSkinLayer={isSkinLayer} /> 
-           {/* PERNAS FRENTE */}
-           <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
-           <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
-           <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
-           <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
-           <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
-           <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
+          {/* TRONCO FRENTE */}
+          <Block sqlId="peito" x="110" y="115" w="80" h="65" isSkinLayer={isSkinLayer} />
+          <Block sqlId="abdomen" x="115" y="185" w="70" h="60" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pelvis" x="115" y="250" w="70" h="40" isSkinLayer={isSkinLayer} />
+          {/* BRAÇOS FRENTE */}
+          <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-direita" cx="82" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          {/* PERNAS FRENTE */}
+          <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
+          <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
         </>
       ) : (
         <>
@@ -124,7 +124,7 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
           <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} isSkinLayer={isSkinLayer} />
           <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} isSkinLayer={isSkinLayer} />
           <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} isSkinLayer={isSkinLayer} />
-          <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" isSkinLayer={isSkinLayer} /> 
+          <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" isSkinLayer={isSkinLayer} />
           <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" isSkinLayer={isSkinLayer} />
           <Block sqlId="gluteos" x="110" y="275" w="80" h="20" isSkinLayer={isSkinLayer} />
           {/* BRAÇOS COSTAS */}
@@ -148,24 +148,24 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
 
   return (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      <svg 
-        viewBox="0 0 300 650" 
+      <svg
+        viewBox="0 0 300 650"
         style={{ height: '550px', width: 'auto', maxWidth: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <g transform="translate(0, 20)">
-          
+
           {/* --- CAMADA 1: SILHUETA / PELE (FUNDO) --- */}
           {/* Desenhamos o corpo inteiro com borda grossa e cor de pele. 
               Como eles se sobrepõem e têm a mesma cor, viram uma silhueta única. */}
           <g id="camada-pele-silhueta">
-             {renderBodyStructure(true)}
+            {renderBodyStructure(true)}
           </g>
 
           {/* --- CAMADA 2: PARTES DO CORPO (FRENTE) --- */}
           {/* Desenhamos o corpo normal por cima */}
           <g id="camada-corpo-normal">
-             {renderBodyStructure(false)}
+            {renderBodyStructure(false)}
           </g>
 
         </g>
