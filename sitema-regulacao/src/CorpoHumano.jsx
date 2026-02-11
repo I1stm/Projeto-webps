@@ -9,7 +9,7 @@ import HeaderSecao from './HeaderSecao';
 import NovaSenha from './NovaSenha'; 
 
 function App() {
-  // --- ESTADOS GERAIS ---
+  // --- ESTADOS GERAIS ---//
   const [darkMode, setDarkMode] = useState(true);
   const [parteSelecionada, setParteSelecionada] = useState(null);
   const [subAreaSelecionada, setSubAreaSelecionada] = useState(null);
