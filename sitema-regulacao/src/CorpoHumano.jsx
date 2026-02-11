@@ -3,13 +3,16 @@ import React from 'react';
 // Adicionamos 'mapaDeNomes' (o cérebro) nas props
 const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
 
-  // --- CORES & ESTILO (Tema Modular Clean) ---
+  // --- CORES & ESTILO ---
   const colors = {
-    fill: '#f8fafc',          // Fundo quase branco
-    stroke: '#64748b',        // Borda cinza
-    fillSelected: '#3b82f6',  // Azul seleção
-    strokeSelected: '#1d4ed8',// Azul borda forte
-    hover: '#e2e8f0'          // Hover suave
+    fill: '#f8fafc',          
+    stroke: '#64748b',        
+    fillSelected: '#3b82f6',  
+    strokeSelected: '#1d4ed8',
+    hover: '#e2e8f0',
+    // Cor Especial para a Pele/Geral (um tom de laranja/pele suave)
+    skinStroke: '#ffccbc',    
+    skinSelected: '#ff5722'   
   };
 
   const getStyle = (targetId) => {
@@ -27,20 +30,15 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
   // --- A MÁGICA DA TRADUÇÃO ---
   const resolverAcao = (e, sqlIdOriginal) => {
     e.stopPropagation();
-    
-    // Tenta achar o objeto no dicionário (ex: { label: 'Coxa', id: 'coxa-dir' })
-    // Se não achar, usa o ID original mesmo.
     const valorFinal = mapaDeNomes[sqlIdOriginal] ? mapaDeNomes[sqlIdOriginal] : sqlIdOriginal;
-    
     if (aoSelecionar) aoSelecionar(valorFinal);
   };
 
-  // Função auxiliar para pegar o nome legível (para o tooltip do mouse)
   const getNomeLegivel = (id) => {
     return mapaDeNomes[id]?.label || id;
   };
 
-  // Componente Genérico para RETÂNGULOS (Tronco, membros)
+  // --- COMPONENTES BÁSICOS ---
   const Block = ({ sqlId, x, y, w, h, radius = 6 }) => (
     <rect
       x={x} y={y} width={w} height={h} rx={radius} ry={radius}
@@ -56,7 +54,6 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
     </rect>
   );
 
-  // Componente Genérico para CÍRCULOS (Cabeça, Mãos)
   const Round = ({ sqlId, cx, cy, r }) => (
     <circle
       cx={cx} cy={cy} r={r}
@@ -72,6 +69,50 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
     </circle>
   );
 
+  // --- NOVO: A CAMADA DE "PELE / GERAL" (O CONTORNO) ---
+  const Contorno = ({ d }) => {
+    const isSelected = parteAtiva === 'pele-geral' || (parteAtiva && parteAtiva.id === 'pele-geral');
+    
+    return (
+      <path
+        d={d}
+        style={{
+          fill: isSelected ? 'rgba(255, 87, 34, 0.1)' : 'transparent', // Leve preenchimento se selecionado
+          stroke: isSelected ? colors.skinSelected : colors.skinStroke,
+          strokeWidth: isSelected ? '6' : '15', // Borda grossa para ser fácil de clicar
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          opacity: 0.6
+        }}
+        onClick={(e) => resolverAcao(e, 'pele-geral')}
+        onMouseEnter={(e) => { 
+            if (!isSelected) {
+                e.target.style.stroke = '#ffab91'; // Laranja mais forte no hover
+                e.target.style.opacity = '1';
+            }
+        }}
+        onMouseLeave={(e) => {
+            if (!isSelected) {
+                e.target.style.stroke = colors.skinStroke;
+                e.target.style.opacity = '0.6';
+            } else {
+                e.target.style.stroke = colors.skinSelected;
+            }
+        }}
+      >
+        <title>{getNomeLegivel('pele-geral')}</title>
+      </path>
+    );
+  };
+
+  // Coordenadas do contorno (Silhueta baseada nos blocos)
+  const pathFrente = "M150,10 C120,10 110,40 110,60 L100,90 L60,110 L50,160 L65,280 L90,300 L90,480 L130,480 L130,350 L170,350 L170,480 L210,480 L210,300 L235,280 L250,160 L240,110 L200,90 L190,60 C190,40 180,10 150,10 Z";
+  
+  // Costas é muito parecido, ajustando levemente
+  const pathCostas = pathFrente; 
+
   return (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
       <svg 
@@ -81,83 +122,68 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
       >
         {vista === 'frente' ? (
           <g transform="translate(0, 20)">
-            {/* =================================================== */}
-            {/* VISÃO FRONTAL (Anatomicamente Padrão)               */}
-            {/* Esquerda do Paciente = Direita da Tela              */}
-            {/* =================================================== */}
             
+            {/* 1. CAMADA DE FUNDO (PELE/GERAL) */}
+            {/* Desenha uma silhueta grossa atrás de tudo */}
+            <Contorno d={pathFrente} />
+
+            {/* 2. CAMADA DO CORPO (Os blocos que já fizemos) */}
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
-            {/* TRONCO FRENTE */}
             <Block sqlId="peito" x="110" y="115" w="80" h="65" />
             <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
             <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
 
-            {/* MEMBROS SUPERIORES (FRENTE) */}
-            {/* Lado Esquerdo do Paciente (Direita da Tela) */}
             <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
             <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
             <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
 
-            {/* Lado Direito do Paciente (Esquerda da Tela) */}
             <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
             <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
             <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
 
-            {/* MEMBROS INFERIORES (FRENTE) */}
-            {/* Perna Esquerda do Paciente (Direita da Tela) */}
             <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
             <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
 
-            {/* Perna Direita do Paciente (Esquerda da Tela) */}
             <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
             <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
             <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
           </g>
         ) : (
           <g transform="translate(0, 20)">
-            {/* =================================================== */}
-            {/* VISÃO COSTAS (Inversão Anatômica)                   */}
-            {/* Esquerda do Paciente = Esquerda da Tela             */}
-            {/* =================================================== */}
+            
+            {/* 1. CAMADA DE FUNDO (PELE/GERAL) */}
+            <Contorno d={pathCostas} />
 
+            {/* 2. CAMADA DO CORPO COSTAS */}
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
-            {/* COLUNA VERTEBRAL (Substitui Peito/Abdomen) */}
             <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
             <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
             <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
 
-            {/* OMBROS COSTAS */}
-            {/* Aqui INVERTEMOS: O que está na Direita da Tela (x=170) agora é o ombro DIREITO */}
             <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" /> 
             <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" />
             
             <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
 
-            {/* MEMBROS SUPERIORES (COSTAS) */}
-            {/* Lado Direito da Tela -> Braço Direito do Paciente */}
             <Block sqlId="biceps-direito" x="205" y="160" w="25" h="55" />
             <Block sqlId="antebraco-direito" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="217" cy="295" r="15" />
 
-            {/* Lado Esquerdo da Tela -> Braço Esquerdo do Paciente */}
             <Block sqlId="biceps-esquerdo" x="70" y="160" w="25" h="55" />
             <Block sqlId="antebraco-esquerdo" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="82" cy="295" r="15" />
 
-            {/* MEMBROS INFERIORES (COSTAS) */}
-            {/* Lado Direito da Tela -> Perna Direita do Paciente */}
             <Block sqlId="coxa-direita" x="155" y="305" w="35" h="90" />
             <Block sqlId="canela-direita" x="155" y="400" w="35" h="90" />
             <Block sqlId="pe-direito" x="155" y="495" w="35" h="20" radius={4} />
 
-            {/* Lado Esquerdo da Tela -> Perna Esquerda do Paciente */}
             <Block sqlId="coxa-esquerda" x="110" y="305" w="35" h="90" />
             <Block sqlId="canela-esquerda" x="110" y="400" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="110" y="495" w="35" h="20" radius={4} />

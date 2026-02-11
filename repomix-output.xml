@@ -54,6 +54,7 @@ sitema-regulacao/
     Login.jsx
     main.jsx
     ModalForm.jsx
+    NovaSenha.jsx
     supabaseClient.js
     Toast.jsx
     ViewerCorpo.jsx
@@ -618,6 +619,87 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 </file>
 
+<file path="sitema-regulacao/src/NovaSenha.jsx">
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
+
+export default function NovaSenha({ aoFinalizar }) {
+  const [senha, setSenha] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState(null);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({ password: senha });
+
+    if (error) {
+      setMensagem({ tipo: 'erro', texto: 'Erro: ' + error.message });
+      setLoading(false);
+    } else {
+      setMensagem({ tipo: 'sucesso', texto: 'Senha alterada com sucesso!' });
+      // Aguarda 1.5s para o usuário ler a mensagem antes de fechar
+      setTimeout(() => {
+        aoFinalizar();
+      }, 1500);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px',
+        width: '90%', maxWidth: '350px', border: '1px solid var(--destaque)',
+        boxShadow: '0 0 20px rgba(0,0,0,0.5)'
+      }}>
+        <h2 style={{ color: 'var(--destaque)', marginTop: 0, textAlign: 'center' }}>Nova Senha</h2>
+        <p style={{ fontSize:'14px', color:'var(--texto-secundario)', textAlign: 'center', marginBottom: '20px' }}>
+          Digite sua nova senha abaixo para recuperar o acesso.
+        </p>
+        
+        <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input 
+            type="password" 
+            placeholder="Nova senha (min. 6 caracteres)"
+            value={senha}
+            onChange={e => setSenha(e.target.value)}
+            required
+            minLength={6}
+            style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)' }}
+          />
+          
+          {mensagem && (
+            <div style={{ 
+              color: mensagem.tipo === 'erro' ? '#ff5252' : '#00e676', 
+              fontSize: '13px', textAlign: 'center', padding: '8px', 
+              backgroundColor: mensagem.tipo === 'erro' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 230, 118, 0.1)', 
+              borderRadius: '4px' 
+            }}>
+              {mensagem.texto}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            style={{ 
+              width:'100%', padding:'12px', background:'var(--destaque)', color:'#fff', 
+              border:'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 'bold' 
+            }}>
+            {loading ? 'Salvando...' : 'Salvar Nova Senha'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="sitema-regulacao/src/supabaseClient.js">
 // src/supabaseClient.js
 import { createClient } from '@supabase/supabase-js'
@@ -903,114 +985,6 @@ const HeaderSecao = ({
 export default HeaderSecao;
 </file>
 
-<file path="sitema-regulacao/src/Login.jsx">
-import React, { useState } from 'react';
-import { supabase } from './supabaseClient';
-
-export default function Login({ aoFechar }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState(null);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErro(null);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErro(error.message === 'Invalid login credentials' 
-        ? 'E-mail ou senha incorretos.' 
-        : 'Erro ao entrar: ' + error.message);
-      setLoading(false);
-    } else {
-      // O App.jsx vai detectar a mudança de sessão automaticamente
-      aoFechar(); 
-    }
-  };
-
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <div style={{
-        backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px',
-        width: '90%', maxWidth: '350px', position: 'relative',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-        border: '1px solid var(--borda)'
-      }}>
-        {/* Botão Fechar */}
-        <button 
-          onClick={aoFechar}
-          style={{
-            position: 'absolute', top: '10px', right: '10px',
-            background: 'transparent', border: 'none',
-            color: 'var(--texto-secundario)', cursor: 'pointer', fontSize: '16px'
-          }}
-        >
-          ✕
-        </button>
-
-        <h2 style={{ color: 'var(--destaque)', textAlign: 'center', marginTop: 0 }}>Acessar Sistema</h2>
-        
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>E-mail</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required
-              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Senha</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required
-              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' }}
-            />
-          </div>
-
-          {erro && <div style={{ color: '#ff5252', fontSize: '13px', textAlign: 'center', padding: '5px', backgroundColor: 'rgba(255, 82, 82, 0.1)', borderRadius: '4px' }}>{erro}</div>}
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{
-              padding: '12px', marginTop: '10px',
-              backgroundColor: 'var(--destaque)', color: '#fff',
-              border: 'none', borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold', fontSize: '15px',
-              opacity: loading ? 0.7 : 1
-            }}
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '20px', fontSize: '12px', textAlign: 'center', color: 'var(--texto-secundario)', borderTop: '1px solid var(--borda)', paddingTop: '15px' }}>
-          <p style={{ margin: 0 }}>Não tem acesso?</p>
-          <p style={{ margin: '5px 0 0 0' }}>Fale com o administrador para solicitar seu cadastro.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="sitema-regulacao/src/ModalForm.jsx">
 import React, { useState, useEffect } from 'react';
 
@@ -1240,6 +1214,145 @@ O esquema do banco de dados inclui:
 git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
 </file>
 
+<file path="sitema-regulacao/src/Login.jsx">
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
+
+export default function Login({ aoFechar }) {
+  const [modoRecuperacao, setModoRecuperacao] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState(null); // Objeto { tipo: 'erro'|'sucesso', texto: '' }
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensagem(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setMensagem({ 
+        tipo: 'erro', 
+        texto: error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message 
+      });
+      setLoading(false);
+    } else {
+      aoFechar();
+    }
+  };
+
+  const handleRecuperacao = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensagem(null);
+
+    // Envia o link mágico para o e-mail
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin, // Garante que volta para a URL correta (Localhost ou Vercel)
+    });
+
+    if (error) {
+      setMensagem({ tipo: 'erro', texto: 'Erro ao enviar: ' + error.message });
+    } else {
+      setMensagem({ tipo: 'sucesso', texto: 'Verifique seu e-mail (inclusive Spam) para redefinir a senha!' });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px',
+        width: '90%', maxWidth: '350px', position: 'relative',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)', border: '1px solid var(--borda)'
+      }}>
+        <button 
+          onClick={aoFechar}
+          style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: 'var(--texto-secundario)', cursor: 'pointer', fontSize: '16px' }}>
+          ✕
+        </button>
+
+        <h2 style={{ color: 'var(--destaque)', textAlign: 'center', marginTop: 0 }}>
+          {modoRecuperacao ? 'Recuperar Senha' : 'Acessar Sistema'}
+        </h2>
+        
+        <form onSubmit={modoRecuperacao ? handleRecuperacao : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>E-mail</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required
+              placeholder="seu@email.com"
+              style={inputStyle}
+            />
+          </div>
+
+          {!modoRecuperacao && (
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', color: 'var(--texto-secundario)', marginBottom: '5px' }}>Senha</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required
+                placeholder="******"
+                style={inputStyle}
+              />
+            </div>
+          )}
+
+          {mensagem && (
+            <div style={{ 
+              color: mensagem.tipo === 'erro' ? '#ff5252' : '#00e676', 
+              fontSize: '13px', textAlign: 'center', padding: '10px', 
+              backgroundColor: mensagem.tipo === 'erro' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 230, 118, 0.1)', 
+              borderRadius: '6px', border: `1px solid ${mensagem.tipo === 'erro' ? '#ff5252' : '#00e676'}`
+            }}>
+              {mensagem.texto}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              padding: '12px', marginTop: '10px',
+              backgroundColor: 'var(--destaque)', color: '#fff',
+              border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold', fontSize: '15px', opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? 'Processando...' : (modoRecuperacao ? 'Enviar Link' : 'Entrar')}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '20px', fontSize: '12px', textAlign: 'center', color: 'var(--texto-secundario)', borderTop: '1px solid var(--borda)', paddingTop: '15px' }}>
+          {modoRecuperacao ? (
+            <p>Lembrou a senha? <span onClick={() => {setModoRecuperacao(false); setMensagem(null)}} style={{color: 'var(--destaque)', cursor: 'pointer', fontWeight: 'bold'}}>Voltar ao login</span></p>
+          ) : (
+             <p>Esqueceu a senha? <span onClick={() => {setModoRecuperacao(true); setMensagem(null)}} style={{color: 'var(--destaque)', cursor: 'pointer', fontWeight: 'bold'}}>Recuperar agora</span></p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle = { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--borda)', background: 'var(--input-bg)', color: 'var(--texto-primario)', outline: 'none' };
+</file>
+
 <file path="sitema-regulacao/src/ViewerCorpo.jsx">
 import React from 'react';
 
@@ -1415,7 +1528,6 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
   };
 
   // --- A MÁGICA DA TRADUÇÃO ---
-  // Quando clica, ele olha no mapa se esse ID tem um nome especial no banco
   const resolverAcao = (e, sqlIdOriginal) => {
     e.stopPropagation();
     
@@ -1443,7 +1555,6 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
         else e.target.style.fill = colors.fillSelected;
       }}
     >
-      {/* Mostra o nome real do banco quando para o mouse em cima */}
       <title>{getNomeLegivel(sqlId)}</title>
     </rect>
   );
@@ -1473,68 +1584,86 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes =
       >
         {vista === 'frente' ? (
           <g transform="translate(0, 20)">
-            {/* --- FRENTE --- */}
+            {/* =================================================== */}
+            {/* VISÃO FRONTAL (Anatomicamente Padrão)               */}
+            {/* Esquerda do Paciente = Direita da Tela              */}
+            {/* =================================================== */}
             
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
+            {/* TRONCO FRENTE */}
             <Block sqlId="peito" x="110" y="115" w="80" h="65" />
             <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
             <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
 
-            {/* MEMBROS ESQUERDOS */}
+            {/* MEMBROS SUPERIORES (FRENTE) */}
+            {/* Lado Esquerdo do Paciente (Direita da Tela) */}
             <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
             <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
             <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
             <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
 
-            {/* MEMBROS DIREITOS */}
+            {/* Lado Direito do Paciente (Esquerda da Tela) */}
             <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
             <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
             <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
             <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
 
-            {/* PERNAS FRENTE */}
+            {/* MEMBROS INFERIORES (FRENTE) */}
+            {/* Perna Esquerda do Paciente (Direita da Tela) */}
             <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
             <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
             <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
 
+            {/* Perna Direita do Paciente (Esquerda da Tela) */}
             <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
             <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
             <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
           </g>
         ) : (
           <g transform="translate(0, 20)">
-            {/* --- COSTAS --- */}
+            {/* =================================================== */}
+            {/* VISÃO COSTAS (Inversão Anatômica)                   */}
+            {/* Esquerda do Paciente = Esquerda da Tela             */}
+            {/* =================================================== */}
+
             <Round sqlId="cabeca" cx="150" cy="50" r="35" />
             <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
 
+            {/* COLUNA VERTEBRAL (Substitui Peito/Abdomen) */}
             <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
             <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
             <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
 
-            {/* OMBROS (Ajustados para preencher costas) */}
-            <Block sqlId="ombro-esquerdo" x="170" y="115" w="65" h="40" /> 
-            <Block sqlId="ombro-direito" x="65" y="115" w="65" h="40" />
+            {/* OMBROS COSTAS */}
+            {/* Aqui INVERTEMOS: O que está na Direita da Tela (x=170) agora é o ombro DIREITO */}
+            <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" /> 
+            <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" />
+            
             <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
 
-            {/* MEMBROS COSTAS */}
-            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
-            <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" />
+            {/* MEMBROS SUPERIORES (COSTAS) */}
+            {/* Lado Direito da Tela -> Braço Direito do Paciente */}
+            <Block sqlId="biceps-direito" x="205" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-direito" x="205" y="220" w="25" h="55" />
+            <Round sqlId="mao-direita" cx="217" cy="295" r="15" />
 
-            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
-            <Round sqlId="mao-direita" cx="82" cy="295" r="15" />
+            {/* Lado Esquerdo da Tela -> Braço Esquerdo do Paciente */}
+            <Block sqlId="biceps-esquerdo" x="70" y="160" w="25" h="55" />
+            <Block sqlId="antebraco-esquerdo" x="70" y="220" w="25" h="55" />
+            <Round sqlId="mao-esquerda" cx="82" cy="295" r="15" />
 
-            {/* PERNAS COSTAS */}
-            <Block sqlId="coxa-esquerda" x="155" y="305" w="35" h="90" />
-            <Block sqlId="canela-esquerda" x="155" y="400" w="35" h="90" />
-            <Block sqlId="pe-esquerdo" x="155" y="495" w="35" h="20" radius={4} />
+            {/* MEMBROS INFERIORES (COSTAS) */}
+            {/* Lado Direito da Tela -> Perna Direita do Paciente */}
+            <Block sqlId="coxa-direita" x="155" y="305" w="35" h="90" />
+            <Block sqlId="canela-direita" x="155" y="400" w="35" h="90" />
+            <Block sqlId="pe-direito" x="155" y="495" w="35" h="20" radius={4} />
 
-            <Block sqlId="coxa-direita" x="110" y="305" w="35" h="90" />
-            <Block sqlId="canela-direita" x="110" y="400" w="35" h="90" />
-            <Block sqlId="pe-direito" x="110" y="495" w="35" h="20" radius={4} />
+            {/* Lado Esquerdo da Tela -> Perna Esquerda do Paciente */}
+            <Block sqlId="coxa-esquerda" x="110" y="305" w="35" h="90" />
+            <Block sqlId="canela-esquerda" x="110" y="400" w="35" h="90" />
+            <Block sqlId="pe-esquerdo" x="110" y="495" w="35" h="20" radius={4} />
           </g>
         )}
       </svg>
@@ -1554,6 +1683,7 @@ import ModalForm from './ModalForm';
 import Toast from './Toast';
 import './App.css'; 
 import HeaderSecao from './HeaderSecao';
+import NovaSenha from './NovaSenha'; // <--- IMPORT NOVO
 
 function App() {
   // --- ESTADOS GERAIS ---
@@ -1567,12 +1697,13 @@ function App() {
   // DADOS DO BANCO & CÉREBRO (MAPA)
   const [subMenus, setSubMenus] = useState([]);
   const [listaProtocolos, setListaProtocolos] = useState([]);
-  const [mapaPartes, setMapaPartes] = useState({}); // Dicionário de nomes
+  const [mapaPartes, setMapaPartes] = useState({}); 
 
-  // MODAL E NOTIFICAÇÕES
+  // MODAL, NOTIFICAÇÕES E RECUPERAÇÃO
   const [modalAberto, setModalAberto] = useState(false);
   const [itemEmEdicao, setItemEmEdicao] = useState(null);
   const [toast, setToast] = useState(null);
+  const [mostraNovaSenha, setMostraNovaSenha] = useState(false); // <--- ESTADO NOVO
 
   // BUSCA E LOGIN
   const [termoBusca, setTermoBusca] = useState('');
@@ -1582,7 +1713,7 @@ function App() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   
   // --- PERMISSÕES E ONLINE CHECKER ---
-  const [isAdmin, setIsAdmin] = useState(false);         
+  const [isAdmin, setIsAdmin] = useState(false);          
   const [isSuperAdmin, setIsSuperAdmin] = useState(false); 
   const [meuPerfil, setMeuPerfil] = useState(null);
   const [usuariosOnline, setUsuariosOnline] = useState([]);
@@ -1596,14 +1727,23 @@ function App() {
     else document.body.classList.remove('dark-mode');
   }, [darkMode]);
 
+  // --- AUTENTICAÇÃO E RECUPERAÇÃO DE SENHA ---
   useEffect(() => {
+    // 1. Pega sessão inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessao(session);
       if (session) carregarPerfilUsuario(session.user.id);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Escuta mudanças (Login, Logout, RECUPERAÇÃO)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSessao(session);
+
+      // SE O USUÁRIO CLICOU NO LINK DE EMAIL DE RECUPERAÇÃO:
+      if (event === 'PASSWORD_RECOVERY') {
+        setMostraNovaSenha(true);
+      }
+
       if (session) {
         carregarPerfilUsuario(session.user.id);
         setMostrarLogin(false);
@@ -1736,7 +1876,7 @@ function App() {
     setParteSelecionada(null);
     const { data, error } = await supabase.from('protocols').select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`).limit(20);
-    
+     
     if (error) {
        const { data: dataBackup } = await supabase.from('protocols').select('*')
         .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`).limit(20);
@@ -1828,9 +1968,13 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       
+      {/* MODAIS GERAIS */}
       {mostrarLogin && <Login aoFechar={() => setMostrarLogin(false)} />}
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
+      
+      {/* MODAL DE NOVA SENHA (ATIVADO PELO E-MAIL) */}
+      {mostraNovaSenha && <NovaSenha aoFinalizar={() => setMostraNovaSenha(false)} />}
 
       {/* LISTA ONLINE */}
       {mostrarListaOnline && (
