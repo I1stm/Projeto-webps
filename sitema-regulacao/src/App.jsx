@@ -103,10 +103,13 @@ function App() {
     }
   }
 
-  // --- ONLINE CHECKER ---
+// --- ONLINE CHECKER (Versão Robusta) ---
   useEffect(() => {
-    if (!sessao?.user || !meuPerfil) return;
+    // Se não tem sessão, nem tenta conectar
+    if (!sessao?.user) return;
+
     const channel = supabase.channel('sala-global', { config: { presence: { key: sessao.user.id } } });
+    
     channel
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
@@ -115,20 +118,26 @@ function App() {
           const usuario = newState[key][0];
           if (usuario) listaTemporaria.push(usuario);
         }
+        // Remove duplicados
         const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
         setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
+          // AQUI ESTAVA O PROBLEMA: Se meuPerfil fosse null, ele não enviava nada.
+          // Agora usamos um "ou" (||) para garantir que envie pelo menos o email.
+          const apelido = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Anônimo';
+          
           await channel.track({
             userId: sessao.user.id,
-            label: meuPerfil.nickname || sessao.user.email,
+            label: apelido,
             entrou_em: new Date().toISOString()
           });
         }
       });
+
     return () => { supabase.removeChannel(channel); };
-  }, [sessao, meuPerfil]);
+  }, [sessao, meuPerfil]); // Mantemos a dependência para atualizar se o perfil carregar depois
 
   // --- CARREGAMENTO DE DADOS DA PARTE ---
   useEffect(() => {
