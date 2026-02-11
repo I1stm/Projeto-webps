@@ -104,3 +104,8 @@ Visão Frontal,Visão Costas,Modo Edição (Admin)
 ],[<img width="1599" height="766" alt="image" src="https://github.com/user-attachments/assets/bd9b1c6e-e606-48b6-9f51-a304f6206ea3" />
 ],[<img width="1590" height="763" alt="image" src="https://github.com/user-attachments/assets/1ad398c6-b660-40ba-bde9-07c8af30fb59" />
 ]
+
+📄 Licença
+Este projeto está sob a licença MIT. Sinta-se livre para usar e modificar.
+
+Desenvolvido com 💙 e React.
