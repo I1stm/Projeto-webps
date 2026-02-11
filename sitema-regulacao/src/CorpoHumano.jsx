@@ -2,7 +2,7 @@ import React from 'react';
 
 const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
 
-  // --- CORES ---
+  // --- CORES --- /// 
   const colors = {
     // Camada da Frente (Normal)
     fill: '#f8fafc',
