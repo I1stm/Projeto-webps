@@ -406,7 +406,17 @@ function App() {
         ) : (
           <>
             {/* PAINEL ESQUERDO: BONECO */}
-            <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
+            <section style={{ 
+                flex: 1, 
+                position: 'relative', 
+                borderRight: '1px solid var(--borda)', 
+                display:'flex', 
+                alignItems:'center', 
+                justifyContent:'center', 
+                // A CORREÇÃO ESTÁ AQUI: Cor dinâmica
+                backgroundColor: darkMode ? 'var(--bg-card)' : '#f8fafc',
+                overflow: 'hidden' 
+            }}>
               
               {/* Botão Girar (Esquerda) */}
               <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
