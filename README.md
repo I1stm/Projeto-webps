@@ -78,3 +78,29 @@ O componente `CorpoHumano.jsx` não é apenas um desenho. Ele funciona em camada
 ```bash
 git clone [https://github.com/seu-usuario/sisreg-pro.git](https://github.com/seu-usuario/sisreg-pro.git)
 cd sisreg-pro
+
+2. Instalar dependências
+Bash
+npm install
+
+3. Configurar Variáveis de Ambiente
+Crie um arquivo .env na raiz:
+
+Snippet de código
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_key_anonima
+
+4. Configurar o Banco de Dados
+Execute o script SQL contido em src/database_schema.sql no Editor SQL do seu projeto Supabase para criar as tabelas (body_parts, protocols, sub_areas) e as políticas de segurança.
+
+Não esqueça de rodar os INSERTS iniciais das partes do corpo!
+
+5. Rodar o projeto
+Bash
+npm run dev
+
+Visão Frontal,Visão Costas,Modo Edição (Admin)
+[<img width="1596" height="754" alt="image" src="https://github.com/user-attachments/assets/cac3f30d-70b2-45ba-8ac3-747650790c6c" />
+],[<img width="1599" height="766" alt="image" src="https://github.com/user-attachments/assets/bd9b1c6e-e606-48b6-9f51-a304f6206ea3" />
+],[<img width="1590" height="763" alt="image" src="https://github.com/user-attachments/assets/1ad398c6-b660-40ba-bde9-07c8af30fb59" />
+]
