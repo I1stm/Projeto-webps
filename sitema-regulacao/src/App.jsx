@@ -103,44 +103,56 @@ function App() {
     }
   }
 
-// --- ONLINE CHECKER (Versão Robusta / Fail-safe) ---
+// --- ONLINE CHECKER (Versão Final Blindada) ---
   useEffect(() => {
-    // Se não tem usuário logado, não faz sentido conectar
     if (!sessao?.user) return;
 
-    const channel = supabase.channel('sala-global', { config: { presence: { key: sessao.user.id } } });
-    
+    // 1. Define o canal único (todos devem estar no 'sala-global')
+    const channel = supabase.channel('sala-global', {
+      config: {
+        presence: {
+          key: sessao.user.id,
+        },
+      },
+    });
+
+    // 2. Configura os ouvintes (Listeners)
     channel
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
         const listaTemporaria = [];
         
-        // Converte o objeto estranho do Supabase em uma lista limpa
+        // O segredo: varre o objeto state e extrai os usuários
         for (let key in newState) {
-          const usuario = newState[key][0];
-          if (usuario) listaTemporaria.push(usuario);
+          const usuarios = newState[key];
+          if (usuarios && usuarios.length > 0) {
+            // Pega o dado mais recente desse usuário
+            listaTemporaria.push(usuarios[0]);
+          }
         }
         
-        // Remove duplicados (caso a mesma pessoa abra 2 abas)
-        const unicos = listaTemporaria.filter((v,i,a)=>a.findIndex(v2=>(v2.userId===v.userId))===i);
+        // Remove duplicatas baseadas no ID
+        const unicos = listaTemporaria.filter((v, i, a) => a.findIndex(v2 => (v2.userId === v.userId)) === i);
         setUsuariosOnline(unicos);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // A MÁGICA ESTÁ AQUI:
-          // Tenta pegar o Nickname. Se falhar, pega a primeira parte do email.
-          const apelido = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Visitante';
+          // 3. SÓ AGORA enviamos o sinal "Estou aqui"
+          const nomeExibicao = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Visitante';
           
           await channel.track({
             userId: sessao.user.id,
-            label: apelido,
-            entrou_em: new Date().toISOString()
+            label: nomeExibicao,
+            online_at: new Date().toISOString(),
           });
         }
       });
 
-    return () => { supabase.removeChannel(channel); };
-  }, [sessao, meuPerfil]); // Recarrega se o perfil mudar
+    // 4. Limpeza ao sair
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessao, meuPerfil]); // Recarrega se o perfil (apelido) mudar
 
   // --- CARREGAMENTO DE DADOS DA PARTE ---
   useEffect(() => {
