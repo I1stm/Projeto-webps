@@ -66,6 +66,7 @@ sitema-regulacao/
   vercel.json
   vite.config.js
 package.json
+README.md
 </directory_structure>
 
 <files>
@@ -1500,178 +1501,118 @@ const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente' }) => {
 export default CorpoHumano;
 </file>
 
-<file path="sitema-regulacao/src/CorpoHumano.jsx">
-import React from 'react';
+<file path="README.md">
+# 🏥 SISREG PRO - Sistema de Regulação de Protocolos Médicos
 
-// Adicionamos 'mapaDeNomes' (o cérebro) nas props
-const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
+> Uma plataforma visual e interativa para consulta de protocolos médicos baseada na anatomia humana.
 
-  // --- CORES & ESTILO (Tema Modular Clean) ---
-  const colors = {
-    fill: '#f8fafc',          // Fundo quase branco
-    stroke: '#64748b',        // Borda cinza
-    fillSelected: '#3b82f6',  // Azul seleção
-    strokeSelected: '#1d4ed8',// Azul borda forte
-    hover: '#e2e8f0'          // Hover suave
-  };
+![Status](https://img.shields.io/badge/STATUS-BETA-orange)
+![Tech](https://img.shields.io/badge/STACK-REACT_%7C_SUPABASE-blue)
+![Security](https://img.shields.io/badge/SECURITY-RLS_ENABLED-green)
 
-  const getStyle = (targetId) => {
-    const isSelected = parteAtiva === targetId;
-    return {
-      fill: isSelected ? colors.fillSelected : colors.fill,
-      stroke: isSelected ? colors.strokeSelected : colors.stroke,
-      strokeWidth: isSelected ? '2.5' : '2',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      vectorEffect: 'non-scaling-stroke',
+## 🎯 Sobre o Projeto
+
+O **SISREG PRO** moderniza o acesso a diretrizes de regulação médica. Ao invés de buscar em listas intermináveis ou PDFs estáticos, o regulador utiliza um **Visualizador Anatômico Interativo** para selecionar a região afetada e encontrar os protocolos corretos (exames necessários, locais de atendimento, critérios de encaminhamento).
+
+O sistema foi projetado com uma arquitetura **Data-Driven**: o Frontend desenha o corpo, mas o Banco de Dados (Supabase) define os nomes, as regras e a estrutura hierárquica.
+
+---
+
+## 🚀 Funcionalidades Principais
+
+### 🧠 Visualizador Anatômico Inteligente
+* **Navegação Visual:** Modelo SVG interativo com vistas **Frente** e **Costas**.
+* **Design Modular:** O corpo é construído por blocos geométricos (CSS-in-JS) para clareza visual.
+* **Camada "Pele/Geral" (Silhueta):** Uma camada de fundo inteligente permite clicar no contorno do boneco para selecionar protocolos sistêmicos ou dermatológicos (que não possuem órgão específico).
+* **Mapeamento Dinâmico:** O SVG possui IDs técnicos (`coxa-direita`), mas o "cérebro" do sistema busca o nome real (`Membro Inferior D`) no banco de dados em tempo real.
+
+### 🛡️ Administração e Segurança (RBAC)
+* **Permissões via Banco de Dados (RLS):**
+    * **Visitante:** Acesso negado.
+    * **User:** Leitura dos protocolos.
+    * **Admin:** Criar/Editar/Excluir protocolos e renomear áreas.
+    * **Super Admin:** Gestão de equipe (promover/rebaixar usuários) e auditoria.
+* **Live Edit:** Administradores podem renomear partes do corpo e subcategorias clicando diretamente nos títulos (Inline Editing), sem acessar o painel do banco de dados.
+
+### 🔐 Autenticação Completa
+* Login via E-mail/Senha.
+* Recuperação de Senha (Fluxo completo com link mágico e modal de redefinição).
+* Monitoramento de Usuários Online (Presence).
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Área | Tecnologia | Detalhes |
+| :--- | :--- | :--- |
+| **Frontend** | **React.js (Vite)** | Hooks personalizados, SVG Manipulável. |
+| **Estilização** | **CSS Modules / CSS-in-JS** | Design System limpo e responsivo. |
+| **Backend** | **Supabase** | BaaS (Backend as a Service). |
+| **Banco de Dados** | **PostgreSQL** | Relacional, com Triggers e Policies. |
+| **Segurança** | **Row Level Security (RLS)** | A segurança é aplicada na query do banco. |
+| **Deploy** | **Vercel** | Integração contínua (CI/CD). |
+
+---
+
+## 🧩 Arquitetura do Boneco (Destaque Técnico)
+
+O componente `CorpoHumano.jsx` não é apenas um desenho. Ele funciona em camadas:
+
+1.  **Camada 0 (Silhueta):** Desenha o corpo inteiro com uma borda grossa (`strokeWidth: 12`) e cor de pele. Como os vetores se sobrepõem e têm a mesma cor, eles criam uma silhueta perfeita para representar "Pele/Geral".
+2.  **Camada 1 (Módulos):** Desenha os blocos (tórax, membros) por cima.
+3.  **O "Cérebro" (Mapper):**
+    ```javascript
+    // Exemplo de como o React traduz o clique
+    const resolverAcao = (sqlIdOriginal) => {
+       // O SVG diz: "cliquei em coxa-direita"
+       // O Mapa diz: "coxa-direita" = "Protocolo de Fêmur"
+       return mapaDeNomes[sqlIdOriginal] || sqlIdOriginal;
     };
-  };
+    ```
 
-  // --- A MÁGICA DA TRADUÇÃO ---
-  const resolverAcao = (e, sqlIdOriginal) => {
-    e.stopPropagation();
-    
-    // Tenta achar o objeto no dicionário (ex: { label: 'Coxa', id: 'coxa-dir' })
-    // Se não achar, usa o ID original mesmo.
-    const valorFinal = mapaDeNomes[sqlIdOriginal] ? mapaDeNomes[sqlIdOriginal] : sqlIdOriginal;
-    
-    if (aoSelecionar) aoSelecionar(valorFinal);
-  };
+---
 
-  // Função auxiliar para pegar o nome legível (para o tooltip do mouse)
-  const getNomeLegivel = (id) => {
-    return mapaDeNomes[id]?.label || id;
-  };
+## 💾 Instalação e Execução
 
-  // Componente Genérico para RETÂNGULOS (Tronco, membros)
-  const Block = ({ sqlId, x, y, w, h, radius = 6 }) => (
-    <rect
-      x={x} y={y} width={w} height={h} rx={radius} ry={radius}
-      style={getStyle(sqlId)}
-      onClick={(e) => resolverAcao(e, sqlId)}
-      onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
-      onMouseLeave={(e) => {
-        if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
-        else e.target.style.fill = colors.fillSelected;
-      }}
-    >
-      <title>{getNomeLegivel(sqlId)}</title>
-    </rect>
-  );
+### Pré-requisitos
+* Node.js instalado.
+* Conta no Supabase.
 
-  // Componente Genérico para CÍRCULOS (Cabeça, Mãos)
-  const Round = ({ sqlId, cx, cy, r }) => (
-    <circle
-      cx={cx} cy={cy} r={r}
-      style={getStyle(sqlId)}
-      onClick={(e) => resolverAcao(e, sqlId)}
-      onMouseEnter={(e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; }}
-      onMouseLeave={(e) => {
-        if (parteAtiva !== sqlId) e.target.style.fill = colors.fill;
-        else e.target.style.fill = colors.fillSelected;
-      }}
-    >
-      <title>{getNomeLegivel(sqlId)}</title>
-    </circle>
-  );
+### 1. Clonar o repositório
+```bash
+git clone [https://github.com/seu-usuario/sisreg-pro.git](https://github.com/seu-usuario/sisreg-pro.git)
+cd sisreg-pro
 
-  return (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      <svg 
-        viewBox="0 0 300 650" 
-        style={{ height: '550px', width: 'auto', maxWidth: '100%' }}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {vista === 'frente' ? (
-          <g transform="translate(0, 20)">
-            {/* =================================================== */}
-            {/* VISÃO FRONTAL (Anatomicamente Padrão)               */}
-            {/* Esquerda do Paciente = Direita da Tela              */}
-            {/* =================================================== */}
-            
-            <Round sqlId="cabeca" cx="150" cy="50" r="35" />
-            <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
+2. Instalar dependências
+Bash
+npm install
 
-            {/* TRONCO FRENTE */}
-            <Block sqlId="peito" x="110" y="115" w="80" h="65" />
-            <Block sqlId="abdomen" x="115" y="185" w="70" h="60" />
-            <Block sqlId="pelvis" x="115" y="250" w="70" h="40" />
+3. Configurar Variáveis de Ambiente
+Crie um arquivo .env na raiz:
 
-            {/* MEMBROS SUPERIORES (FRENTE) */}
-            {/* Lado Esquerdo do Paciente (Direita da Tela) */}
-            <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" />
-            <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" />
-            <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" /> 
+Snippet de código
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_key_anonima
 
-            {/* Lado Direito do Paciente (Esquerda da Tela) */}
-            <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" />
-            <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" />
-            <Round sqlId="mao-direita" cx="82" cy="295" r="15" /> 
+4. Configurar o Banco de Dados
+Execute o script SQL contido em src/database_schema.sql no Editor SQL do seu projeto Supabase para criar as tabelas (body_parts, protocols, sub_areas) e as políticas de segurança.
 
-            {/* MEMBROS INFERIORES (FRENTE) */}
-            {/* Perna Esquerda do Paciente (Direita da Tela) */}
-            <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" />
-            <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" />
-            <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} />
+Não esqueça de rodar os INSERTS iniciais das partes do corpo!
 
-            {/* Perna Direita do Paciente (Esquerda da Tela) */}
-            <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" />
-            <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" />
-            <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} />
-          </g>
-        ) : (
-          <g transform="translate(0, 20)">
-            {/* =================================================== */}
-            {/* VISÃO COSTAS (Inversão Anatômica)                   */}
-            {/* Esquerda do Paciente = Esquerda da Tela             */}
-            {/* =================================================== */}
+5. Rodar o projeto
+Bash
+npm run dev
 
-            <Round sqlId="cabeca" cx="150" cy="50" r="35" />
-            <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} />
+Visão Frontal,Visão Costas,Modo Edição (Admin)
+[<img width="1596" height="754" alt="image" src="https://github.com/user-attachments/assets/cac3f30d-70b2-45ba-8ac3-747650790c6c" />
+],[<img width="1599" height="766" alt="image" src="https://github.com/user-attachments/assets/bd9b1c6e-e606-48b6-9f51-a304f6206ea3" />
+],[<img width="1590" height="763" alt="image" src="https://github.com/user-attachments/assets/1ad398c6-b660-40ba-bde9-07c8af30fb59" />
+]
 
-            {/* COLUNA VERTEBRAL (Substitui Peito/Abdomen) */}
-            <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} />
-            <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} />
-            <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} />
+📄 Licença
+Este projeto está sob a licença MIT. Sinta-se livre para usar e modificar.
 
-            {/* OMBROS COSTAS */}
-            {/* Aqui INVERTEMOS: O que está na Direita da Tela (x=170) agora é o ombro DIREITO */}
-            <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" /> 
-            <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" />
-            
-            <Block sqlId="gluteos" x="110" y="275" w="80" h="20" />
-
-            {/* MEMBROS SUPERIORES (COSTAS) */}
-            {/* Lado Direito da Tela -> Braço Direito do Paciente */}
-            <Block sqlId="biceps-direito" x="205" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-direito" x="205" y="220" w="25" h="55" />
-            <Round sqlId="mao-direita" cx="217" cy="295" r="15" />
-
-            {/* Lado Esquerdo da Tela -> Braço Esquerdo do Paciente */}
-            <Block sqlId="biceps-esquerdo" x="70" y="160" w="25" h="55" />
-            <Block sqlId="antebraco-esquerdo" x="70" y="220" w="25" h="55" />
-            <Round sqlId="mao-esquerda" cx="82" cy="295" r="15" />
-
-            {/* MEMBROS INFERIORES (COSTAS) */}
-            {/* Lado Direito da Tela -> Perna Direita do Paciente */}
-            <Block sqlId="coxa-direita" x="155" y="305" w="35" h="90" />
-            <Block sqlId="canela-direita" x="155" y="400" w="35" h="90" />
-            <Block sqlId="pe-direito" x="155" y="495" w="35" h="20" radius={4} />
-
-            {/* Lado Esquerdo da Tela -> Perna Esquerda do Paciente */}
-            <Block sqlId="coxa-esquerda" x="110" y="305" w="35" h="90" />
-            <Block sqlId="canela-esquerda" x="110" y="400" w="35" h="90" />
-            <Block sqlId="pe-esquerdo" x="110" y="495" w="35" h="20" radius={4} />
-          </g>
-        )}
-      </svg>
-    </div>
-  );
-};
-
-export default CorpoHumano;
+Desenvolvido com 💙 e React.
 </file>
 
 <file path="sitema-regulacao/src/App.jsx">
@@ -2178,6 +2119,186 @@ const CardProtocolo = ({ item, isAdmin, modoEdicao, onEdit, onRemove, showTag })
 };
 
 export default App;
+</file>
+
+<file path="sitema-regulacao/src/CorpoHumano.jsx">
+import React from 'react';
+
+const CorpoHumano = ({ aoSelecionar, parteAtiva, vista = 'frente', mapaDeNomes = {} }) => {
+
+  // --- CORES --- /// 
+  const colors = {
+    // Camada da Frente (Normal)
+    fill: '#f8fafc',
+    stroke: '#64748b',
+    fillSelected: '#3b82f6',
+    strokeSelected: '#1d4ed8',
+    hover: '#e2e8f0',
+
+    // Camada de Trás (Pele/Geral) - Tom pêssego/pele
+    skinBase: '#ffccbc',      // Cor normal da "aura" de pele
+    skinSelected: '#ff7043',  // Cor quando a pele geral está selecionada
+  };
+
+  // --- FUNÇÕES AUXILIARES ---
+
+  // Resolve o nome bonito baseado no ID
+  const getNomeLegivel = (id) => mapaDeNomes[id]?.label || id;
+
+  // Lida com o clique. Se for layer de pele, força o ID 'pele-geral'
+  const handleAction = (e, sqlId, isSkinLayer) => {
+    e.stopPropagation();
+    const targetId = isSkinLayer ? 'pele-geral' : sqlId;
+
+    const valorFinal = mapaDeNomes[targetId] ? mapaDeNomes[targetId] : targetId;
+    if (aoSelecionar) aoSelecionar(valorFinal);
+  };
+
+  // --- GERADOR DE ESTILOS (O SEGREDO ESTÁ AQUI) ---
+  const getStyle = (targetId, isSkinLayer) => {
+    // --> ESTILO DA CAMADA DE PELE (FUNDO)
+    if (isSkinLayer) {
+      const isSkinActive = parteAtiva === 'pele-geral' || (parteAtiva && parteAtiva.id === 'pele-geral');
+      const color = isSkinActive ? colors.skinSelected : colors.skinBase;
+
+      return {
+        fill: color,           // Preenchimento sólido
+        stroke: color,         // Borda da MESMA cor
+        strokeWidth: '12',     // Borda GROSSA para criar a "aura" externa
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        strokeLinejoin: 'round', // Cantos arredondados na junção
+        strokeLinecap: 'round',
+        opacity: isSkinActive ? 1 : 0.6 // Um pouco transparente se não selecionado
+      };
+    }
+
+    // --> ESTILO DA CAMADA NORMAL (FRENTE)
+    const isSelected = parteAtiva === targetId;
+    return {
+      fill: isSelected ? colors.fillSelected : colors.fill,
+      stroke: isSelected ? colors.strokeSelected : colors.stroke,
+      strokeWidth: isSelected ? '2.5' : '2',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      vectorEffect: 'non-scaling-stroke',
+    };
+  };
+
+
+  // --- COMPONENTES DE FORMA (Reutilizáveis para as duas camadas) ---
+
+  const Block = ({ sqlId, x, y, w, h, radius = 6, isSkinLayer = false }) => (
+    <rect
+      x={x} y={y} width={w} height={h} rx={radius} ry={radius}
+      style={getStyle(sqlId, isSkinLayer)}
+      onClick={(e) => handleAction(e, sqlId, isSkinLayer)}
+      // Hover só aplica na camada da frente para não bugar a de trás
+      onMouseEnter={!isSkinLayer ? (e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; } : undefined}
+      onMouseLeave={!isSkinLayer ? (e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.fill; else e.target.style.fill = colors.fillSelected; } : undefined}
+    >
+      <title>{getNomeLegivel(isSkinLayer ? 'pele-geral' : sqlId)}</title>
+    </rect>
+  );
+
+  const Round = ({ sqlId, cx, cy, r, isSkinLayer = false }) => (
+    <circle
+      cx={cx} cy={cy} r={r}
+      style={getStyle(sqlId, isSkinLayer)}
+      onClick={(e) => handleAction(e, sqlId, isSkinLayer)}
+      onMouseEnter={!isSkinLayer ? (e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.hover; } : undefined}
+      onMouseLeave={!isSkinLayer ? (e) => { if (parteAtiva !== sqlId) e.target.style.fill = colors.fill; else e.target.style.fill = colors.fillSelected; } : undefined}
+    >
+      <title>{getNomeLegivel(isSkinLayer ? 'pele-geral' : sqlId)}</title>
+    </circle>
+  );
+
+  // --- DEFINIÇÃO DA ESTRUTURA DO CORPO (Para não repetir código) ---
+  const renderBodyStructure = (isSkinLayer) => (
+    <>
+      <Round sqlId="cabeca" cx="150" cy="50" r="35" isSkinLayer={isSkinLayer} />
+      <Block sqlId="pescoco" x="135" y="90" w="30" h="20" radius={4} isSkinLayer={isSkinLayer} />
+
+      {vista === 'frente' ? (
+        <>
+          {/* TRONCO FRENTE */}
+          <Block sqlId="peito" x="110" y="115" w="80" h="65" isSkinLayer={isSkinLayer} />
+          <Block sqlId="abdomen" x="115" y="185" w="70" h="60" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pelvis" x="115" y="250" w="70" h="40" isSkinLayer={isSkinLayer} />
+          {/* BRAÇOS FRENTE */}
+          <Block sqlId="ombro-esquerdo" x="200" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="biceps-esquerdo" x="205" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-esquerdo" x="205" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-esquerda" cx="217" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          <Block sqlId="ombro-direito" x="65" y="115" w="35" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="biceps-direito" x="70" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-direito" x="70" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-direita" cx="82" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          {/* PERNAS FRENTE */}
+          <Block sqlId="coxa-esquerda" x="155" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-esquerda" x="155" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-esquerdo" x="155" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
+          <Block sqlId="coxa-direita" x="110" y="300" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-direita" x="110" y="395" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-direito" x="100" y="490" w="45" h="20" radius={4} isSkinLayer={isSkinLayer} />
+        </>
+      ) : (
+        <>
+          {/* COSTAS ESTRUTURA */}
+          <Block sqlId="coluna-cervical" x="135" y="115" w="30" h="40" radius={2} isSkinLayer={isSkinLayer} />
+          <Block sqlId="coluna-toracica" x="135" y="160" w="30" h="65" radius={2} isSkinLayer={isSkinLayer} />
+          <Block sqlId="coluna-lombar" x="135" y="230" w="30" h="40" radius={2} isSkinLayer={isSkinLayer} />
+          <Block sqlId="ombro-direito" x="170" y="115" w="65" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="ombro-esquerdo" x="65" y="115" w="65" h="40" isSkinLayer={isSkinLayer} />
+          <Block sqlId="gluteos" x="110" y="275" w="80" h="20" isSkinLayer={isSkinLayer} />
+          {/* BRAÇOS COSTAS */}
+          <Block sqlId="biceps-direito" x="205" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-direito" x="205" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-direita" cx="217" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          <Block sqlId="biceps-esquerdo" x="70" y="160" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Block sqlId="antebraco-esquerdo" x="70" y="220" w="25" h="55" isSkinLayer={isSkinLayer} />
+          <Round sqlId="mao-esquerda" cx="82" cy="295" r="15" isSkinLayer={isSkinLayer} />
+          {/* PERNAS COSTAS */}
+          <Block sqlId="coxa-direita" x="155" y="305" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-direita" x="155" y="400" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-direito" x="155" y="495" w="35" h="20" radius={4} isSkinLayer={isSkinLayer} />
+          <Block sqlId="coxa-esquerda" x="110" y="305" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="canela-esquerda" x="110" y="400" w="35" h="90" isSkinLayer={isSkinLayer} />
+          <Block sqlId="pe-esquerdo" x="110" y="495" w="35" h="20" radius={4} isSkinLayer={isSkinLayer} />
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <svg
+        viewBox="0 0 300 650"
+        style={{ height: '550px', width: 'auto', maxWidth: '100%' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g transform="translate(0, 20)">
+
+          {/* --- CAMADA 1: SILHUETA / PELE (FUNDO) --- */}
+          {/* Desenhamos o corpo inteiro com borda grossa e cor de pele. 
+              Como eles se sobrepõem e têm a mesma cor, viram uma silhueta única. */}
+          <g id="camada-pele-silhueta">
+            {renderBodyStructure(true)}
+          </g>
+
+          {/* --- CAMADA 2: PARTES DO CORPO (FRENTE) --- */}
+          {/* Desenhamos o corpo normal por cima */}
+          <g id="camada-corpo-normal">
+            {renderBodyStructure(false)}
+          </g>
+
+        </g>
+      </svg>
+    </div>
+  );
+};
+
+export default CorpoHumano;
 </file>
 
 </files>

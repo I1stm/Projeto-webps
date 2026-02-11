@@ -6,7 +6,7 @@ import ModalForm from './ModalForm';
 import Toast from './Toast';
 import './App.css'; 
 import HeaderSecao from './HeaderSecao';
-import NovaSenha from './NovaSenha'; // <--- IMPORT NOVO
+import NovaSenha from './NovaSenha'; 
 
 function App() {
   // --- ESTADOS GERAIS ---
@@ -26,7 +26,7 @@ function App() {
   const [modalAberto, setModalAberto] = useState(false);
   const [itemEmEdicao, setItemEmEdicao] = useState(null);
   const [toast, setToast] = useState(null);
-  const [mostraNovaSenha, setMostraNovaSenha] = useState(false); // <--- ESTADO NOVO
+  const [mostraNovaSenha, setMostraNovaSenha] = useState(false); 
 
   // BUSCA E LOGIN
   const [termoBusca, setTermoBusca] = useState('');
@@ -52,17 +52,13 @@ function App() {
 
   // --- AUTENTICAÇÃO E RECUPERAÇÃO DE SENHA ---
   useEffect(() => {
-    // 1. Pega sessão inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessao(session);
       if (session) carregarPerfilUsuario(session.user.id);
     });
 
-    // 2. Escuta mudanças (Login, Logout, RECUPERAÇÃO)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSessao(session);
-
-      // SE O USUÁRIO CLICOU NO LINK DE EMAIL DE RECUPERAÇÃO:
       if (event === 'PASSWORD_RECOVERY') {
         setMostraNovaSenha(true);
       }
@@ -163,7 +159,6 @@ function App() {
     const { error } = await supabase.from('body_parts').update({ display_name: novoNome }).eq('id', parteSelecionada);
     if (!error) {
       setToast({ mensagem: 'Nome atualizado!', tipo: 'sucesso' });
-      // Atualiza o mapa localmente
       setMapaPartes(prev => ({
         ...prev,
         [parteSelecionada]: { ...prev[parteSelecionada], label: novoNome }
@@ -199,7 +194,7 @@ function App() {
     setParteSelecionada(null);
     const { data, error } = await supabase.from('protocols').select('*, body_parts(display_name)')
       .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%,informacoes.ilike.%${texto}%`).limit(20);
-     
+      
     if (error) {
        const { data: dataBackup } = await supabase.from('protocols').select('*')
         .or(`problema.ilike.%${texto}%,locais.ilike.%${texto}%,exame.ilike.%${texto}%`).limit(20);
@@ -296,7 +291,7 @@ function App() {
       <ModalForm isOpen={modalAberto} onClose={() => setModalAberto(false)} onSave={salvarDadosDoModal} itemEdicao={itemEmEdicao} />
       {toast && <Toast mensagem={toast.mensagem} tipo={toast.tipo} onClose={() => setToast(null)} />}
       
-      {/* MODAL DE NOVA SENHA (ATIVADO PELO E-MAIL) */}
+      {/* MODAL DE NOVA SENHA */}
       {mostraNovaSenha && <NovaSenha aoFinalizar={() => setMostraNovaSenha(false)} />}
 
       {/* LISTA ONLINE */}
@@ -411,8 +406,30 @@ function App() {
         ) : (
           <>
             {/* PAINEL ESQUERDO: BONECO */}
-            <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <section style={{ flex: 1, position: 'relative', borderRight: '1px solid var(--borda)', display:'flex', alignItems:'center', justifyContent:'center', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
+              
+              {/* Botão Girar (Esquerda) */}
               <button onClick={() => { setVista(v => v === 'frente' ? 'costas' : 'frente'); setParteSelecionada(null); }} style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, padding: '8px', borderRadius: '8px', border: '1px solid var(--borda)', background: 'var(--bg-card)', color: 'var(--texto-primario)', cursor: 'pointer' }}>🔄 {vista.toUpperCase()}</button>
+              
+              {/* Botão GERAL (Direita) */}
+              <button 
+                onClick={() => setParteSelecionada('assuntos-gerais')}
+                title="Protocolos Gerais e Administrativos"
+                style={{ 
+                  position: 'absolute', top: 20, right: 20, zIndex: 10, 
+                  padding: '8px 16px', borderRadius: '20px', 
+                  border: 'none', 
+                  background: parteSelecionada === 'assuntos-gerais' ? 'var(--destaque)' : '#607d8b', 
+                  color: '#fff', cursor: 'pointer', fontWeight: 'bold',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>📋</span> 
+                GERAL
+              </button>
+
               <div style={{ height: '90%', width: '100%', maxWidth: '350px' }}>
                  <CorpoHumano 
                    aoSelecionar={(info) => setParteSelecionada(info.id || info)} 
@@ -437,7 +454,6 @@ function App() {
                 parteSelecionada ? (
                   <div style={{ animation: 'fadeIn 0.3s' }}>
                     
-                    {/* HEADER SEÇÃO COM RENAME */}
                     <HeaderSecao 
                       parteSelecionada={parteSelecionada}
                       nomeAtual={mapaPartes[parteSelecionada]?.label || parteSelecionada} 
@@ -448,7 +464,6 @@ function App() {
                       onRename={renomearParte} 
                     />
 
-                    {/* SUB-MENUS */}
                     {subMenus.length > 0 ? (
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', margin: '20px 0', alignItems: 'flex-start' }}>
                         {subMenus.map(sub => (
