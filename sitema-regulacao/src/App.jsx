@@ -103,56 +103,50 @@ function App() {
     }
   }
 
-// --- ONLINE CHECKER (Versão Final Blindada) ---
+// --- ONLINE CHECKER: SISTEMA DE HEARTBEAT (VIA BANCO DE DADOS) ---
   useEffect(() => {
     if (!sessao?.user) return;
 
-    // 1. Define o canal único (todos devem estar no 'sala-global')
-    const channel = supabase.channel('sala-global', {
-      config: {
-        presence: {
-          key: sessao.user.id,
-        },
-      },
-    });
-
-    // 2. Configura os ouvintes (Listeners)
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const newState = channel.presenceState();
-        const listaTemporaria = [];
-        
-        // O segredo: varre o objeto state e extrai os usuários
-        for (let key in newState) {
-          const usuarios = newState[key];
-          if (usuarios && usuarios.length > 0) {
-            // Pega o dado mais recente desse usuário
-            listaTemporaria.push(usuarios[0]);
-          }
-        }
-        
-        // Remove duplicatas baseadas no ID
-        const unicos = listaTemporaria.filter((v, i, a) => a.findIndex(v2 => (v2.userId === v.userId)) === i);
-        setUsuariosOnline(unicos);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          // 3. SÓ AGORA enviamos o sinal "Estou aqui"
-          const nomeExibicao = meuPerfil?.nickname || sessao.user.email?.split('@')[0] || 'Visitante';
-          
-          await channel.track({
-            userId: sessao.user.id,
-            label: nomeExibicao,
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
-
-    // 4. Limpeza ao sair
-    return () => {
-      supabase.removeChannel(channel);
+    // Função que diz "Estou Vivo" pro banco
+    const enviarSinalDeVida = async () => {
+      await supabase.from('profiles').update({ last_seen: new Date() }).eq('id', sessao.user.id);
     };
-  }, [sessao, meuPerfil]); // Recarrega se o perfil (apelido) mudar
+
+    // Função que baixa a lista de quem está vivo
+    const buscarUsuariosOnline = async () => {
+      // Data de corte: 1 minuto atrás
+      const umMinutoAtras = new Date(Date.now() - 60 * 1000).toISOString();
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, email, nickname, last_seen')
+        .gt('last_seen', umMinutoAtras) // Onde last_seen for MAIOR QUE 1 minuto atrás
+        .order('last_seen', { ascending: false });
+
+      if (data) {
+        // Formata para o padrão visual
+        const formatados = data.map(u => ({
+          userId: u.id,
+          label: u.nickname || u.email.split('@')[0],
+          online_at: u.last_seen
+        }));
+        setUsuariosOnline(formatados);
+      }
+    };
+
+    // 1. Executa imediatamente ao carregar
+    enviarSinalDeVida();
+    buscarUsuariosOnline();
+
+    // 2. Configura o ciclo de 30 segundos (Intervalo)
+    const intervalo = setInterval(() => {
+      enviarSinalDeVida();
+      buscarUsuariosOnline();
+    }, 30000); // 30000 ms = 30 segundos
+
+    // Limpeza ao sair
+    return () => clearInterval(intervalo);
+  }, [sessao]);
 
   // --- CARREGAMENTO DE DADOS DA PARTE ---
   useEffect(() => {
